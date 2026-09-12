@@ -7,7 +7,13 @@ from typing import Any
 from datetime import datetime
 
 from .chart import Chart
-from .parsers import parse_show_chart, parse_show_dasha, parse_show_info, parse_show_other
+from .parsers import (
+    parse_show_bala,
+    parse_show_chart,
+    parse_show_dasha,
+    parse_show_info,
+    parse_show_other,
+)
 from .session import Session
 
 #: The dasha systems the site offers, as the ``dasha`` parameter spells them.
@@ -125,3 +131,21 @@ def _moment(value: str | datetime | None) -> str:
     return (
         f"{moment.day}.{moment.month}.{moment.year} {moment.hour}:{moment.minute}"
     )
+
+
+def show_bala(
+    session: Session, chart: Chart, divisional: str = "D1", full: bool = True
+) -> dict[str, Any]:
+    """Planetary strengths: Shad Bala with its components, varga strengths and
+    the two aspect matrices.
+
+    ``full`` picks the endpoint: ``show-bala`` returns all four tables, while
+    ``show-shad-bala`` returns the Shad Bala one alone (a third of the size).
+    Both parse to the same shape, with the missing parts empty.
+    """
+    html = session.action(
+        "show-bala" if full else "show-shad-bala", chart, divisional=divisional
+    )
+    result = parse_show_bala(html)
+    result["divisional"] = divisional
+    return result

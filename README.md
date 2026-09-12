@@ -10,7 +10,7 @@ chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
-**show-dasha**.
+**show-dasha**, **show-bala**.
 
 ## Install
 
@@ -43,6 +43,10 @@ vedic-parser show-other --name Ss --date 07.08.1983 --time 23:00:00 \
 # a dasha table with exact period boundaries
 vedic-parser show-dasha --name Ss --date 07.08.1983 --time 23:00:00 \
     --latitude 55.45 --longitude 37.37 --timezone +4 --dasha vimshottari --level 2
+
+# planetary strengths: Shad Bala, varga strengths, aspect matrices
+vedic-parser show-bala --name Ss --date 07.08.1983 --time 23:00:00 \
+    --latitude 55.45 --longitude 37.37 --timezone +4
 
 # parse a response saved earlier, without touching the network
 vedic-parser show-info ... --html response.html
@@ -120,6 +124,16 @@ come back as codes) or sign-based (chara_rao, narayana — names only), and
 
 Boundaries are minute-resolution and a few maha seams round a minute apart, so
 do not assume periods join exactly.
+
+### What show-bala returns
+
+`shad_bala` per planet with every component (percentage of the required
+minimum plus virupas, and rupas for the total), `varga_bala` (Vimsopaka and
+Vaiseshikamsa across the four varga sets, plus the Vargottama count) and
+`aspects` — the drik bala matrices onto planets and onto houses, each with the
+benefic/malefic summary rows and the nature the chart assigns to each planet.
+`--shad-bala-only` requests the lighter `show-shad-bala` endpoint; the missing
+parts come back empty.
 
 ## Access notes
 

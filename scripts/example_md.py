@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from vedic_parser import (  # noqa: E402
+    parse_show_bala,
     parse_show_chart,
     parse_show_dasha,
     parse_show_info,
@@ -617,11 +618,151 @@ def build_show_dasha() -> list[str]:
     return out
 
 
+def build_show_bala() -> list[str]:
+    bala = fixture("show-bala-en-d1.html", parse_show_bala)
+    ru = fixture("show-shad-bala-ru-d1.html", parse_show_bala)
+
+    out = ["# Пример данных: `show-bala`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-bala --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4",
+    )
+    out.append(
+        "Четыре таблицы в одном ответе: `shad_bala`, `varga_bala` и две матрицы "
+        "аспектов в `aspects`. Есть облегчённый вариант — `--shad-bala-only` "
+        "(действие `show-shad-bala`), он отдаёт только первую таблицу, втрое "
+        "меньше по объёму.\n"
+    )
+    out.append(
+        "Колонки здесь сгруппированы через `colspan`, причём ячейки перекрывают "
+        "группы неравномерно: у одних бал это пара «процент + вирупы», у других "
+        "одно число. Парсер разворачивает и шапку, и строку в колонки и "
+        "сопоставляет их, а таблицы опознаёт по строению (сколько строк в шапке, "
+        "чем подписаны колонки), не по подписям.\n"
+    )
+
+    out.append("## 1. Шад-бала\n")
+    out.append("Одна планета целиком:\n")
+    as_json(out, bala["shad_bala"][0])
+    out.append("И все семь — процент от необходимого минимума:\n")
+    keys = list(bala["shad_bala"][0]["components"])
+    table(
+        out,
+        ["Планета"] + [f'`{k}`' for k in keys],
+        [
+            [row["code"]]
+            + [
+                (
+                    f'{c["percent"]}% / {c["virupas"]}'
+                    if c["percent"] is not None
+                    else (c["virupas"] if c["virupas"] is not None else None)
+                )
+                for c in (row["components"][k] for k in keys)
+            ]
+            for row in bala["shad_bala"]
+        ],
+    )
+    out.append(
+        "Где есть процент — это доля от требуемого минимума, а второе число "
+        "вирупы. У Шад-балы дополнительно приходят рупы (те же вирупы делённые "
+        "на 60 — сходится на всех семи планетах). Йуддха-бала пустая: в этой "
+        "карте никто не в планетной войне. Проценты совпадают с колонкой "
+        "«Шад-бала» в `show-info`.\n"
+    )
+
+    out.append("## 2. Варга-балы\n")
+    out.append(
+        "Вимшопака и Вайшешикамша считаются по наборам варг; набор опознаётся по "
+        "числу в подписи («Shodasha Varga (16)»), которое от языка не зависит — "
+        "отсюда ключи `shodasha` / `dasha` / `sapta` / `shad`. Варготтама-бала — "
+        "просто счётчик. Здесь 9 строк: с Раху и Кету.\n"
+    )
+    table(
+        out,
+        ["Планета", "Вимшопака 16", "10", "7", "6", "Вайшешикамша 16", "Варготтама"],
+        [
+            [
+                row["code"],
+                f'{row["vimsopaka"]["shodasha"]["percent"]}% / {row["vimsopaka"]["shodasha"]["value"]}',
+                f'{row["vimsopaka"]["dasha"]["percent"]}%',
+                f'{row["vimsopaka"]["sapta"]["percent"]}%',
+                f'{row["vimsopaka"]["shad"]["percent"]}%',
+                row["vaiseshikamsa"]["shodasha"]["percent"],
+                row["vargottama"],
+            ]
+            for row in bala["varga_bala"]
+        ],
+    )
+
+    out.append("## 3. Матрица аспектов на планеты\n")
+    on_planets = bala["aspects"]["on_planets"]
+    out.append(
+        "Строки — аспектирующие планеты (узлы не аспектируют), колонки — цели. "
+        "В ячейках вирупы дрик-балы. Там, где сайт печатает `+` или `-`, "
+        "величины нет — парсер сохраняет символ как есть.\n"
+    )
+    table(
+        out,
+        ["От \\ на"] + on_planets["columns"] + ["природа"],
+        [
+            [code] + values + [on_planets["nature"].get(code)]
+            for code, values in on_planets["rows"].items()
+        ]
+        + [
+            ["**+ (благо)**"] + on_planets["totals"]["benefic"] + [""],
+            ["**− (вред)**"] + on_planets["totals"]["malefic"] + [""],
+        ],
+    )
+    out.append(
+        "Две нижние строки — суммы: `+` складывает аспекты благодетелей, `−` — "
+        "вредителей, а символьные ячейки дают ноль. Это проверено арифметикой по "
+        "всем колонкам обеих матриц. Кто благодетель — вердикт самой карты (цвет "
+        "подписи строки), и он совпадает с колонкой «ЕБ» в `show-info`: Луна "
+        "здесь убывающая, поэтому вредитель.\n"
+    )
+
+    out.append("## 4. Матрица аспектов на дома\n")
+    on_houses = bala["aspects"]["on_houses"]
+    table(
+        out,
+        ["От \\ дом"] + [str(h) for h in on_houses["columns"]],
+        [[code] + values for code, values in on_houses["rows"].items()]
+        + [
+            ["**+**"] + on_houses["totals"]["benefic"],
+            ["**−**"] + on_houses["totals"]["malefic"],
+        ],
+    )
+
+    out.append("## 5. Облегчённый вариант и язык\n")
+    out.append(
+        "`--shad-bala-only` отдаёт ту же структуру, только `varga_bala` и "
+        "`aspects` приходят пустыми. Числа от языка не зависят:\n"
+    )
+    table(
+        out,
+        ["Код", "en", "ru", "Шад-бала", "Вирупы", "Рупы"],
+        [
+            [
+                en["code"], en["name"], ru_row["name"],
+                f'{en["components"]["shad_bala"]["percent"]}%',
+                en["components"]["shad_bala"]["virupas"],
+                en["components"]["shad_bala"]["rupas"],
+            ]
+            for en, ru_row in zip(bala["shad_bala"], ru["shad_bala"])
+        ],
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
     "show-other": ("example-show-other.md", build_show_other),
     "show-dasha": ("example-show-dasha.md", build_show_dasha),
+    "show-bala": ("example-show-bala.md", build_show_bala),
 }
 
 

@@ -5,6 +5,7 @@ See docs/recon.md for what the site returns and which endpoints exist.
 
 from .chart import Chart, parse_degrees
 from .parsers import (
+    parse_show_bala,
     parse_show_chart,
     parse_show_dasha,
     parse_show_info,
@@ -26,6 +27,7 @@ __all__ = [
     "TokenNotFound",
     "VedicHoroError",
     "parse_degrees",
+    "parse_show_bala",
     "parse_show_chart",
     "parse_show_dasha",
     "parse_show_info",

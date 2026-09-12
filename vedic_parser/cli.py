@@ -14,7 +14,13 @@ from typing import Any, Sequence
 
 from . import api
 from .chart import Chart
-from .parsers import parse_show_chart, parse_show_dasha, parse_show_info, parse_show_other
+from .parsers import (
+    parse_show_bala,
+    parse_show_chart,
+    parse_show_dasha,
+    parse_show_info,
+    parse_show_other,
+)
 from .session import BASE_BY_LANG, Session, VedicHoroError
 
 
@@ -147,6 +153,20 @@ def build_parser() -> argparse.ArgumentParser:
     dasha_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     dasha_cmd.set_defaults(handler=_cmd_show_dasha)
 
+    bala_cmd = sub.add_parser(
+        "show-bala", help="Shad Bala, varga strengths and the aspect matrices"
+    )
+    _add_common_args(bala_cmd, suppress=True)
+    _add_chart_args(bala_cmd)
+    bala_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    bala_cmd.add_argument(
+        "--shad-bala-only",
+        action="store_true",
+        help="request show-shad-bala instead: the Shad Bala table alone",
+    )
+    bala_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    bala_cmd.set_defaults(handler=_cmd_show_bala)
+
     return parser
 
 
@@ -196,6 +216,18 @@ def _cmd_show_dasha(args: argparse.Namespace) -> dict[str, Any]:
         divisional=args.divisional,
         cycle=args.cycle,
         current=args.current,
+    )
+
+
+def _cmd_show_bala(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_bala(handle.read())
+    return api.show_bala(
+        _open_session(args),
+        _chart(args),
+        divisional=args.divisional,
+        full=not args.shad_bala_only,
     )
 
 
