@@ -18,6 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from vedic_parser import (  # noqa: E402
+    parse_get_argala,
+    parse_get_aspects,
     parse_show_avasthas,
     parse_show_bala,
     parse_show_bhava,
@@ -1102,6 +1104,117 @@ def build_show_sade_sati() -> list[str]:
     return out
 
 
+# Recorded answers of the two plain-text endpoints, for the same chart.
+ASPECTS = {1: "Sa|5 8 11", 4: "Ju Sa|2 8 11", 5: "|1 7 10", 3: "|6 9 12"}
+ARGALA = {
+    1: ("2 12 4 10 11 3", "5 9 8 6 3"),
+    5: ("6 4 8 2 3 7", "9 1 12 10 7"),
+    9: ("8 10 6 12 11 7", "5 1 2 4"),
+    12: ("1 11 3 9 10 2", "4 8 7 5"),
+}
+
+
+def build_effects() -> list[str]:
+    out = ["# Пример данных: `get-aspects` и `get-argala`\n", HEADER]
+    out.append(
+        "Эти два действия — единственные, что отвечают **не HTML, а короткой "
+        "строкой**: странице они нужны лишь чтобы перекрасить уже нарисованную "
+        "карту.\n"
+    )
+    code_block(
+        out,
+        "sh",
+        "vedic-parser get-aspects --sign 4 --name Ss --date 07.08.1983 ... ",
+        "vedic-parser get-argala  --sign 1 --type 1 --name Ss ...",
+    )
+    out.append(
+        "`--sign` — абсолютный номер знака (Овен = 1), тот же, что карта печатает "
+        "в доме. Все числа в ответах — тоже абсолютные номера знаков, а не "
+        "позиции относительно запрошенного.\n"
+    )
+
+    out.append("## 1. `get-aspects`\n")
+    out.append(
+        "Ответ вида `Sa|5 8 11`: слева — планеты, аспектирующие этот знак "
+        "(то же, что карта показывает в доме), справа — знаки, которые он "
+        "аспектирует сам по раши-дришти.\n"
+    )
+    table(
+        out,
+        ["Знак", "Ответ", "`planets`", "`signs`", "Проверка раши-дришти"],
+        [
+            [
+                sign, f"`{answer}`",
+                ", ".join(parse_get_aspects(answer)["planets"]) or "—",
+                ", ".join(str(x) for x in parse_get_aspects(answer)["signs"]),
+                note,
+            ]
+            for (sign, answer), note in zip(
+                sorted(ASPECTS.items()),
+                [
+                    "Овен подвижный → неподвижные, кроме соседнего (2)",
+                    "Близнецы двойственный → двойственные, кроме себя",
+                    "Рак подвижный → неподвижные, кроме соседнего (5)",
+                    "Лев неподвижный → подвижные, кроме соседнего (4)",
+                ],
+            )
+        ],
+    )
+    as_json(out, {"sign": 4, **parse_get_aspects(ASPECTS[4])})
+
+    out.append("## 2. `get-argala`\n")
+    out.append(
+        "Ответ — шесть номеров знаков для `--type 1`. Группы взяты из того, как "
+        "их красит сам сайт: зелёные — аргала, красные — вародха-аргала.\n"
+    )
+    table(
+        out,
+        ["Знак", "Ответ", "`argala` (зелёные)", "`virodha` (красные)", ""],
+        [
+            [
+                sign, f"`{answers[0]}`",
+                ", ".join(str(x) for x in parse_get_argala(answers[0])["argala"]),
+                ", ".join(str(x) for x in parse_get_argala(answers[0])["virodha"]),
+                "← знак Кету: группы наоборот" if sign == 9 else "2-й, 4-й, 11-й / 12-й, 10-й, 3-й",
+            ]
+            for sign, answers in sorted(ARGALA.items())
+        ],
+    )
+    out.append(
+        "**Особенность:** сами шесть позиций всегда классические, но для знака, "
+        "который занимает **Кету**, аргала и вародха приходят поменянными "
+        "местами. Проверено по всем двенадцати знакам двух разных карт: в каждой "
+        "ровно один знак «перевёрнут», и оба раза это знак Кету (знак Раху — "
+        "нет). Парсер отдаёт группировку как есть, не «исправляя» её.\n"
+    )
+
+    out.append("## 3. Второй набор: `--type 2`\n")
+    out.append(
+        "Пять номеров вместо шести (иногда четыре), и раскладка другая: зелёные "
+        "— позиции 0 и 2, красные — 1 и 3, а пятая приходит отдельным цветом и "
+        "попадает в `special`. Типы кроме 1 и 2 сайт не понимает — отвечает "
+        "HTTP 500.\n"
+    )
+    table(
+        out,
+        ["Знак", "Ответ", "`argala`", "`virodha`", "`special`"],
+        [
+            [
+                sign, f"`{answers[1]}`",
+                ", ".join(str(x) for x in parse_get_argala(answers[1], type=2)["argala"]),
+                ", ".join(str(x) for x in parse_get_argala(answers[1], type=2)["virodha"]),
+                ", ".join(str(x) for x in parse_get_argala(answers[1], type=2)["special"]) or "—",
+            ]
+            for sign, answers in sorted(ARGALA.items())
+        ],
+    )
+    out.append(
+        "---\n\nОтветы записаны с vedic-horo.com для той же карты; "
+        "перегенерировать — `python scripts/example_md.py`."
+    )
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
@@ -1112,6 +1225,7 @@ DOCUMENTS = {
     "show-avasthas": ("example-show-avasthas.md", build_show_avasthas),
     "show-bhava": ("example-show-bhava.md", build_show_bhava),
     "show-sade-sati": ("example-show-sade-sati.md", build_show_sade_sati),
+    "effects": ("example-effects.md", build_effects),
 }
 
 

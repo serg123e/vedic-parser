@@ -12,7 +12,8 @@ chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
-**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**, **show-sade-sati**.
+**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**, **show-sade-sati**,
+**get-aspects**, **get-argala**.
 
 ## Install
 
@@ -177,6 +178,17 @@ occurrence has the continuous main span plus every dated `segment` with Saturn's
 placement; `within_main` separates the phases that tile that span from the
 brushes outside it. Dates come from the machine-readable `data` attributes, so
 they are full ISO moments rather than the rendered labels.
+
+### What get-aspects and get-argala return
+
+The only two endpoints that answer with plain text rather than HTML.
+`get-aspects` gives the planets aspecting one sign and the signs it aspects
+back by rasi drishti; `get-argala` gives the six classic argala positions,
+split into `argala` and `virodha` the way the site colours them. All numbers
+are absolute sign numbers (Aries = 1).
+
+Mind one quirk: for the sign Ketu occupies the two argala groups come back
+swapped. That is the site's own grouping and is reported as given.
 
 ## Access notes
 

@@ -8,6 +8,8 @@ from datetime import datetime
 
 from .chart import Chart
 from .parsers import (
+    parse_get_argala,
+    parse_get_aspects,
     parse_show_avasthas,
     parse_show_bala,
     parse_show_bhava,
@@ -204,3 +206,47 @@ def show_sade_sati(session: Session, chart: Chart) -> dict[str, Any]:
     """
     html = session.action("show-sade-sati", chart)
     return parse_show_sade_sati(html)
+
+
+def get_aspects(
+    session: Session, chart: Chart, sign: int, divisional: str = "D1", style: str = "North"
+) -> dict[str, Any]:
+    """What aspects one sign, and what that sign aspects.
+
+    ``sign`` is an absolute sign number, Aries = 1 — the same number the chart
+    prints in each house. The answer names the planets aspecting that sign and
+    the signs it aspects by rasi drishti.
+    """
+    text = session.action(
+        "get-aspects", chart, sign=str(sign), divisional=divisional, style=style
+    )
+    result = parse_get_aspects(text)
+    result["sign"] = sign
+    return result
+
+
+def get_argala(
+    session: Session,
+    chart: Chart,
+    sign: int,
+    type: int = 1,
+    divisional: str = "D1",
+    style: str = "North",
+) -> dict[str, Any]:
+    """Argala and virodha argala on one sign.
+
+    ``sign`` is an absolute sign number, Aries = 1. ``type`` picks the set:
+    1 is the primary argala and virodha argala the chart's own link uses, 2 the
+    second set; anything else makes the site answer HTTP 500.
+    """
+    text = session.action(
+        "get-argala",
+        chart,
+        type=str(type),
+        sign=str(sign),
+        divisional=divisional,
+        style=style,
+    )
+    result = parse_get_argala(text, type=type)
+    result["sign"] = sign
+    return result

@@ -5,6 +5,8 @@ See docs/recon.md for what the site returns and which endpoints exist.
 
 from .chart import Chart, parse_degrees
 from .parsers import (
+    parse_get_argala,
+    parse_get_aspects,
     parse_show_avasthas,
     parse_show_bala,
     parse_show_bhava,
@@ -31,6 +33,8 @@ __all__ = [
     "TokenNotFound",
     "VedicHoroError",
     "parse_degrees",
+    "parse_get_argala",
+    "parse_get_aspects",
     "parse_show_avasthas",
     "parse_show_bala",
     "parse_show_bhava",

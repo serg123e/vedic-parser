@@ -15,6 +15,8 @@ from typing import Any, Sequence
 from . import api
 from .chart import Chart
 from .parsers import (
+    parse_get_argala,
+    parse_get_aspects,
     parse_show_avasthas,
     parse_show_bala,
     parse_show_bhava,
@@ -202,6 +204,32 @@ def build_parser() -> argparse.ArgumentParser:
     sade_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     sade_cmd.set_defaults(handler=_cmd_show_sade_sati)
 
+    aspects_cmd = sub.add_parser(
+        "get-aspects", help="what aspects one sign, and what it aspects back"
+    )
+    _add_common_args(aspects_cmd, suppress=True)
+    _add_chart_args(aspects_cmd)
+    aspects_cmd.add_argument(
+        "--sign", type=int, required=True, choices=range(1, 13), metavar="1-12",
+        help="absolute sign number, Aries = 1",
+    )
+    aspects_cmd.add_argument("--divisional", default="D1", help="varga code (default: D1)")
+    aspects_cmd.set_defaults(handler=_cmd_get_aspects)
+
+    argala_cmd = sub.add_parser("get-argala", help="argala and virodha argala on one sign")
+    _add_common_args(argala_cmd, suppress=True)
+    _add_chart_args(argala_cmd)
+    argala_cmd.add_argument(
+        "--sign", type=int, required=True, choices=range(1, 13), metavar="1-12",
+        help="absolute sign number, Aries = 1",
+    )
+    argala_cmd.add_argument(
+        "--type", type=int, default=1, choices=[1, 2],
+        help="1 primary argala/virodha (default), 2 the second set",
+    )
+    argala_cmd.add_argument("--divisional", default="D1", help="varga code (default: D1)")
+    argala_cmd.set_defaults(handler=_cmd_get_argala)
+
     return parser
 
 
@@ -292,6 +320,22 @@ def _cmd_show_sade_sati(args: argparse.Namespace) -> dict[str, Any]:
         with open(args.html, encoding="utf-8") as handle:
             return parse_show_sade_sati(handle.read())
     return api.show_sade_sati(_open_session(args), _chart(args))
+
+
+def _cmd_get_aspects(args: argparse.Namespace) -> dict[str, Any]:
+    return api.get_aspects(
+        _open_session(args), _chart(args), sign=args.sign, divisional=args.divisional
+    )
+
+
+def _cmd_get_argala(args: argparse.Namespace) -> dict[str, Any]:
+    return api.get_argala(
+        _open_session(args),
+        _chart(args),
+        sign=args.sign,
+        type=args.type,
+        divisional=args.divisional,
+    )
 
 
 def _open_session(args: argparse.Namespace) -> Session:
