@@ -5,11 +5,11 @@ parsing what it returns. The site has no JSON API — everything comes back as
 HTML — so these tools call its `actions.php` endpoints and turn the fragments
 into plain data.
 
-`docs/example-show-info.md` shows the data these tools return for one real
+The `docs/example-*.md` documents show the data these tools return for one real
 chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
-Two tools so far: **session** and **show-info**.
+Tools so far: **session**, **show-info**, **show-chart**.
 
 ## Install
 
@@ -30,6 +30,10 @@ vedic-parser show-info --name Ss --date 07.08.1983 --time 23:00:00 \
 # another divisional chart, or reckoned from the Moon (2), Sun (1), Arudha Lagna (AL)
 vedic-parser show-info ... --divisional D9
 vedic-parser show-info ... --from 2
+
+# one divisional chart: twelve houses with their signs, planets and aspects
+vedic-parser show-chart --name Ss --date 07.08.1983 --time 23:00:00 \
+    --latitude 55.45 --longitude 37.37 --timezone +4 --divisional D9
 
 # parse a response saved earlier, without touching the network
 vedic-parser show-info ... --html response.html
@@ -71,6 +75,17 @@ dignity from its tooltip), `navamsa`, `nakshatra` (name, pada, lord — D1 only)
 Codes (`Su`, `Cn`, `Asl`, house and lordship numbers) are read from CSS classes
 and hrefs, so they are the same in both languages; `name` fields carry whatever
 the site rendered.
+
+Mind one trap: in a `show-info` for a varga other than D1, `rasi` is still the
+natal D1 sign and `navamsa` the D9 sign — only `degrees`, `house`, `bindu` and
+the balas follow the varga. The signs of that varga come from `show-chart`.
+
+### What show-chart returns
+
+Twelve houses in order, each with its sign (code, number, name), the bodies in
+it (whole degrees, retrograde flag) and the bodies aspecting it; plus the same
+placements as a flat `planets` list. `--style North|South` only changes what the
+site renders — the two very different markups parse to the same shape.
 
 ## Access notes
 

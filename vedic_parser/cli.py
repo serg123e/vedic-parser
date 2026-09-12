@@ -14,7 +14,7 @@ from typing import Any, Sequence
 
 from . import api
 from .chart import Chart
-from .parsers import parse_show_info
+from .parsers import parse_show_chart, parse_show_info
 from .session import BASE_BY_LANG, Session, VedicHoroError
 
 
@@ -105,6 +105,21 @@ def build_parser() -> argparse.ArgumentParser:
     info_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     info_cmd.set_defaults(handler=_cmd_show_info)
 
+    chart_cmd = sub.add_parser(
+        "show-chart", help="one divisional chart: the twelve houses with their contents"
+    )
+    _add_common_args(chart_cmd, suppress=True)
+    _add_chart_args(chart_cmd)
+    chart_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    chart_cmd.add_argument(
+        "--style",
+        default="North",
+        choices=["North", "South"],
+        help="chart style to request; both parse to the same shape (default: North)",
+    )
+    chart_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    chart_cmd.set_defaults(handler=_cmd_show_chart)
+
     return parser
 
 
@@ -123,6 +138,15 @@ def _cmd_show_info(args: argparse.Namespace) -> dict[str, Any]:
             return parse_show_info(handle.read())
     return api.show_info(
         _open_session(args), _chart(args), divisional=args.divisional, from_=args.from_
+    )
+
+
+def _cmd_show_chart(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_chart(handle.read())
+    return api.show_chart(
+        _open_session(args), _chart(args), divisional=args.divisional, style=args.style
     )
 
 

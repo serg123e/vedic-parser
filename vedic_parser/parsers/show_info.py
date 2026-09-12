@@ -17,8 +17,9 @@ from typing import Any
 from bs4 import BeautifulSoup, Tag
 
 from ..chart import parse_degrees
-
-PLANET_CODES = ("As", "Su", "Mo", "Ma", "Me", "Ju", "Ve", "Sa", "Ra", "Ke")
+from ._html import PLANET_CODES, code_from_class, href_group, selected_option
+from ._html import text as _text
+from ._html import value as _value
 
 # "Ashvini (1, Ke)" / "Ашвини (1, Ke)"
 NAKSHATRA_RE = re.compile(r"^(?P<name>.+?)\s*\(\s*(?P<pada>\d+)\s*,\s*(?P<lord>\w+)\s*\)$")
@@ -60,6 +61,12 @@ def parse_show_info(html: str) -> dict[str, Any]:
     :func:`vedic_parser.api.show_info` overwrites it with the requested varga.
     The reliable in-band signal is the column count: only D1 carries the
     Nakshatra column.
+
+    Careful with a varga other than D1: ``degrees``, ``house``, ``bindu`` and
+    the balas follow the requested varga, but ``rasi`` stays the natal D1 sign
+    and ``navamsa`` the D9 sign. So the sign a planet occupies *in that varga*
+    is not in this response — take it from ``show-chart`` (for D9 the
+    ``navamsa`` column happens to coincide).
     """
     soup = BeautifulSoup(html, "lxml")
     scope = soup.select_one("#natal-info") or soup
@@ -120,7 +127,7 @@ def _parse_planet_row(row: Tag, columns: dict[str, int]) -> dict[str, Any]:
     degrees = cell("degrees")
 
     return {
-        "code": _planet_code(label.find("a")),
+        "code": code_from_class(label.find("a"), PLANET_CODES),
         "name": re.sub(r"\s*\(R\)$", "", name),
         "retrograde": name.endswith("(R)"),
         "karaka": _value(cell("karaka")),
@@ -141,21 +148,13 @@ def _parse_planet_row(row: Tag, columns: dict[str, int]) -> dict[str, Any]:
     }
 
 
-def _planet_code(link: Tag | None) -> str | None:
-    """Planet code from the link's class, e.g. ``<a class="desc Su">``."""
-    for name in (link or {}).get("class", []) if link else []:
-        if name in PLANET_CODES:
-            return name
-    return None
-
-
 def _parse_rasi(cell: Tag | None) -> dict[str, Any] | None:
     """Sign with its two-letter code; ``dignity`` is the cell's tooltip."""
     text = _value(cell)
     if text is None:
         return None
     link = cell.find("a")
-    code = _href_group(link, IN_SIGN_HREF_RE)
+    code = href_group(link, IN_SIGN_HREF_RE)
     dignity = (cell.get("title") or "").strip() or None
     return {"code": code, "name": text, "dignity": dignity}
 
@@ -165,7 +164,7 @@ def _parse_nakshatra(cell: Tag | None) -> dict[str, Any] | None:
     if text is None:
         return None
     parsed: dict[str, Any] = {
-        "code": _href_group(cell.find("a"), NAKSHATRA_HREF_RE),
+        "code": href_group(cell.find("a"), NAKSHATRA_HREF_RE),
         "name": text,
         "pada": None,
         "lord": None,
@@ -181,7 +180,7 @@ def _parse_nakshatra(cell: Tag | None) -> dict[str, Any] | None:
 def _parse_house(cell: Tag | None) -> int | None:
     if cell is None:
         return None
-    house = _href_group(cell.find("a"), IN_HOUSE_HREF_RE)
+    house = href_group(cell.find("a"), IN_HOUSE_HREF_RE)
     if house is not None:
         return int(house)
     text = _value(cell)
@@ -280,26 +279,5 @@ def _parse_ashtakavarga(scope: Tag) -> dict[str, Any]:
 # -- helpers ---------------------------------------------------------------
 
 
-def _text(node: Tag | None) -> str:
-    return node.get_text(" ", strip=True) if node is not None else ""
-
-
-def _value(node: Tag | None) -> str | None:
-    """Cell text, with the site's ``-`` placeholder mapped to None."""
-    text = _text(node)
-    return None if text in ("", "-") else text
-
-
-def _href_group(link: Tag | None, pattern: re.Pattern[str]) -> str | None:
-    if link is None:
-        return None
-    match = pattern.search(link.get("href", ""))
-    return match.group(1) if match else None
-
-
 def _selected_divisional(scope: Tag) -> str | None:
-    select = scope.select_one("#divisional-natal")
-    if select is None:
-        return None
-    selected = select.select_one("option[selected]")
-    return selected.get("value") if selected else None
+    return selected_option(scope.select_one("#divisional-natal"))
