@@ -14,7 +14,7 @@ from typing import Any, Sequence
 
 from . import api
 from .chart import Chart
-from .parsers import parse_show_chart, parse_show_info, parse_show_other
+from .parsers import parse_show_chart, parse_show_dasha, parse_show_info, parse_show_other
 from .session import BASE_BY_LANG, Session, VedicHoroError
 
 
@@ -129,6 +129,24 @@ def build_parser() -> argparse.ArgumentParser:
     other_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     other_cmd.set_defaults(handler=_cmd_show_other)
 
+    dasha_cmd = sub.add_parser("show-dasha", help="one dasha table with exact boundaries")
+    _add_common_args(dasha_cmd, suppress=True)
+    _add_chart_args(dasha_cmd)
+    dasha_cmd.add_argument(
+        "--dasha", default="vimshottari", choices=api.DASHAS, help="dasha system"
+    )
+    dasha_cmd.add_argument(
+        "--level", type=int, default=2, choices=[1, 2, 3, 4],
+        help="1 maha, 2 antar, 3 pratyantar, 4 sookshma (default: 2)",
+    )
+    dasha_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    dasha_cmd.add_argument(
+        "--current", metavar="D.M.YYYY H:M", help="which stretch to return (default: now)"
+    )
+    dasha_cmd.add_argument("--cycle", type=int, default=0, help="step whole cycles (default: 0)")
+    dasha_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    dasha_cmd.set_defaults(handler=_cmd_show_dasha)
+
     return parser
 
 
@@ -164,6 +182,21 @@ def _cmd_show_other(args: argparse.Namespace) -> dict[str, Any]:
         with open(args.html, encoding="utf-8") as handle:
             return parse_show_other(handle.read())
     return api.show_other(_open_session(args), _chart(args), divisional=args.divisional)
+
+
+def _cmd_show_dasha(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_dasha(handle.read())
+    return api.show_dasha(
+        _open_session(args),
+        _chart(args),
+        dasha=args.dasha,
+        level=args.level,
+        divisional=args.divisional,
+        cycle=args.cycle,
+        current=args.current,
+    )
 
 
 def _open_session(args: argparse.Namespace) -> Session:

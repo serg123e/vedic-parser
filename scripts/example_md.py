@@ -17,7 +17,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from vedic_parser import parse_show_chart, parse_show_info, parse_show_other  # noqa: E402
+from vedic_parser import (  # noqa: E402
+    parse_show_chart,
+    parse_show_dasha,
+    parse_show_info,
+    parse_show_other,
+)
 
 FIXTURES = ROOT / "tests" / "fixtures"
 SIGNS = ("Ar", "Ta", "Ge", "Cn", "Le", "Vi", "Li", "Sc", "Sg", "Cp", "Aq", "Pi")
@@ -472,10 +477,151 @@ def build_show_other() -> list[str]:
     return out
 
 
+def build_show_dasha() -> list[str]:
+    maha = fixture("show-dasha-en-vimshottari-l1.html", parse_show_dasha)
+    antar = fixture("show-dasha-en-vimshottari-l2.html", parse_show_dasha)
+    chara = fixture("show-dasha-en-chara-l2.html", parse_show_dasha)
+    ru = fixture("show-dasha-ru-vimshottari-l2.html", parse_show_dasha)
+
+    out = ["# Пример данных: `show-dasha`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-dasha --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4 \\",
+        "    --dasha vimshottari --level 1",
+    )
+    out.append(
+        "Ответ: `dasha`, `divisional`, `kind`, `level` и `periods` — список "
+        "периодов. Самое ценное здесь в атрибутах строки, а не в тексте:\n"
+    )
+    code_block(
+        out,
+        "html",
+        '<tr start="23.11.1978 16:25" end="23.11.1997 13:21">',
+        '  <td><span class="Sa">Saturn</span></td>',
+        "  <td>23 Nov 1978</td><td class=\"hide\">16:25</td><td>-</td>",
+        "</tr>",
+    )
+    out.append(
+        "Границы берутся из `start`/`end` и приводятся к ISO, а видимая дата "
+        "(`23 Nov 1978` / `23 ноя 1978`) остаётся просто подписью — по ней "
+        "парсить не надо.\n"
+    )
+
+    out.append("## 1. Один период целиком\n")
+    as_json(out, antar["periods"][12])
+
+    out.append("## 2. Маха-даши (`--level 1`)\n")
+    out.append(f'Девять периодов Вимшоттари, `kind` = `{maha["kind"]}`:\n')
+    table(
+        out,
+        ["Управитель", "Начало", "Конец", "Возраст", "Подпись сайта"],
+        [
+            [", ".join(p["lords"]), p["start"], p["end"], p["age"], p["start_label"]]
+            for p in maha["periods"]
+        ],
+    )
+    out.append(
+        "`age` — возраст на начало периода; у первой махи он `null`, потому что "
+        "она началась до рождения (1978 против 1983 — это нормально, Вимшоттари "
+        "стартует от накшатры Луны).\n"
+    )
+
+    out.append("## 3. Антар-даши (`--level 2`)\n")
+    out.append(
+        f'Уровень множит число строк: {len(antar["periods"])} строк вместо '
+        f'{len(maha["periods"])}. Уровни: 1 маха, 2 антар, 3 пратьянтар '
+        "(≈700 строк, ~175 КБ), 4 сукшма. Первые девять — антары внутри махи "
+        "Сатурна:\n"
+    )
+    table(
+        out,
+        ["Цепочка", "Начало", "Конец", "Возраст"],
+        [
+            ["-".join(p["lords"]), p["start"], p["end"], p["age"]]
+            for p in antar["periods"][:9]
+        ],
+    )
+    out.append(
+        "Вложенность сходится: первая антара начинается ровно с махой, последняя "
+        "ею же заканчивается.\n"
+    )
+    seams = [
+        (a["labels"], a["end"], b["start"])
+        for a, b in zip(antar["periods"], antar["periods"][1:])
+        if a["end"] != b["start"]
+    ]
+    out.append(
+        "**Одна особенность данных:** время приходит с точностью до минуты, и на "
+        "стыках махи две стороны иногда округляются по-разному. В этой таблице "
+        f'такой шов один: после {"-".join(seams[0][0])} конец `{seams[0][1]}`, '
+        f"а следующий период начинается в `{seams[0][2]}`. То есть на строгую "
+        "непрерывность полагаться нельзя.\n"
+    )
+
+    out.append("## 4. Знаковые даши\n")
+    code_block(out, "sh", "vedic-parser show-dasha ... --dasha chara_rao --level 2")
+    out.append(
+        "Чара и Нарайана идут по знакам, и сайт печатает их обычным текстом — "
+        "без `<span class=\"Sa\">`. Поэтому `kind` = `sign`, `lords` пустой, а в "
+        "`labels` лежат названия на языке домена. Если нужны коды знаков — "
+        "сопоставление имя→код даёт `show-chart` для того же языка.\n"
+    )
+    table(
+        out,
+        ["Цепочка", "Начало", "Конец", "Возраст"],
+        [
+            ["-".join(p["labels"]), p["start"], p["end"], p["age"]]
+            for p in chara["periods"][:8]
+        ],
+    )
+    out.append(
+        f'Всего периодов: {len(chara["periods"])} — знаковые даши покрывают '
+        "больше века, поэтому таблица длинная.\n"
+    )
+
+    out.append("## 5. Шесть систем\n")
+    table(
+        out,
+        ["`--dasha`", "Тип", "Что это"],
+        [
+            ["`vimshottari`", "планетная", "основная, 120 лет"],
+            ["`yogini`", "планетная", "36 лет"],
+            ["`ashtottari`", "планетная", "108 лет"],
+            ["`chara_rao`", "знаковая", "Чара даша в трактовке К.Н. Рао"],
+            ["`narayana`", "знаковая", "Нарайана даша"],
+            ["`navamsa`", "планетная", "Навамша даша"],
+        ],
+    )
+    out.append(
+        "Плюс параметры `--divisional` (любая варга D1…D60), `--current` "
+        "(какой отрезок последовательности вернуть, по умолчанию «сейчас») и "
+        "`--cycle` (шаг целыми циклами — те самые стрелки ↓↑ в интерфейсе).\n"
+    )
+
+    out.append("## 6. Язык ничего не меняет\n")
+    out.append(
+        "Русский ответ даёт те же коды и те же границы до минуты — отличаются "
+        "только подписи:\n"
+    )
+    table(
+        out,
+        ["Коды", "Начало", "en", "ru"],
+        [
+            ["-".join(en["lords"]), en["start"], "-".join(en["labels"]), "-".join(ru_row["labels"])]
+            for en, ru_row in list(zip(antar["periods"], ru["periods"]))[:5]
+        ],
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
     "show-other": ("example-show-other.md", build_show_other),
+    "show-dasha": ("example-show-dasha.md", build_show_dasha),
 }
 
 

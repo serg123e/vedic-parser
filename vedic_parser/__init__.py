@@ -4,7 +4,12 @@ See docs/recon.md for what the site returns and which endpoints exist.
 """
 
 from .chart import Chart, parse_degrees
-from .parsers import parse_show_chart, parse_show_info, parse_show_other
+from .parsers import (
+    parse_show_chart,
+    parse_show_dasha,
+    parse_show_info,
+    parse_show_other,
+)
 from .session import (
     AccessDenied,
     BootstrapBlocked,
@@ -22,6 +27,7 @@ __all__ = [
     "VedicHoroError",
     "parse_degrees",
     "parse_show_chart",
+    "parse_show_dasha",
     "parse_show_info",
     "parse_show_other",
 ]

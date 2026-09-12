@@ -4,9 +4,21 @@ from __future__ import annotations
 
 from typing import Any
 
+from datetime import datetime
+
 from .chart import Chart
-from .parsers import parse_show_chart, parse_show_info, parse_show_other
+from .parsers import parse_show_chart, parse_show_dasha, parse_show_info, parse_show_other
 from .session import Session
+
+#: The dasha systems the site offers, as the ``dasha`` parameter spells them.
+DASHAS = (
+    "vimshottari",
+    "yogini",
+    "ashtottari",
+    "chara_rao",
+    "narayana",
+    "navamsa",
+)
 
 
 def show_info(
@@ -67,3 +79,49 @@ def show_other(session: Session, chart: Chart, divisional: str = "D1") -> dict[s
     result = parse_show_other(html)
     result["divisional"] = divisional
     return result
+
+
+def show_dasha(
+    session: Session,
+    chart: Chart,
+    dasha: str = "vimshottari",
+    level: int = 2,
+    divisional: str = "D1",
+    cycle: int = 0,
+    current: str | datetime | None = None,
+    search: str = "",
+) -> dict[str, Any]:
+    """One dasha table: every period with its exact boundaries.
+
+    ``dasha`` is one of :data:`DASHAS`. ``level`` is the depth of the chain —
+    1 maha, 2 antar, 3 pratyantar, 4 sookshma; each level multiplies the number
+    of rows, so level 3 of vimshottari is already ~700 periods. ``current``
+    picks which stretch of the sequence to return (default: now) and ``cycle``
+    steps whole cycles away from it, matching the arrows in the site's own UI.
+    """
+    if dasha not in DASHAS:
+        raise ValueError(f"dasha must be one of {DASHAS}, got {dasha!r}")
+    html = session.action(
+        "show-dasha",
+        chart,
+        dasha=dasha,
+        level=str(level),
+        divisional=divisional,
+        cycle=str(cycle),
+        current=_moment(current),
+        search=search,
+    )
+    result = parse_show_dasha(html)
+    result["dasha"] = dasha
+    result["divisional"] = divisional
+    return result
+
+
+def _moment(value: str | datetime | None) -> str:
+    """Format a moment the way the site's own JavaScript does (unpadded)."""
+    if isinstance(value, str):
+        return value
+    moment = value or datetime.now()
+    return (
+        f"{moment.day}.{moment.month}.{moment.year} {moment.hour}:{moment.minute}"
+    )
