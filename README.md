@@ -5,7 +5,9 @@ parsing what it returns. The site has no JSON API — everything comes back as
 HTML — so these tools call its `actions.php` endpoints and turn the fragments
 into plain data.
 
-The `docs/example-*.md` documents show the data these tools return for one real
+`AGENTS.md` is the integration reference: data schemas, inputs and outputs of
+every parser, how to run them and what the limitations are. The
+`docs/example-*.md` documents show the data these tools return for one real
 chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
