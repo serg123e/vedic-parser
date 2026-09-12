@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 from vedic_parser import (  # noqa: E402
     parse_show_avasthas,
     parse_show_bala,
+    parse_show_bhava,
     parse_show_chart,
     parse_show_dasha,
     parse_show_info,
@@ -948,6 +949,81 @@ def build_show_avasthas() -> list[str]:
     return out
 
 
+def build_show_bhava() -> list[str]:
+    bhava = fixture("show-bhava-en-d1.html", parse_show_bhava)
+
+    out = ["# Пример данных: `show-bhava`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-bhava --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4",
+    )
+    out.append(
+        "Бхава-чалита: `houses` — двенадцать домов с куспидом, границами, "
+        "размером и составом, и `chart` — рисунок в той же разметке, что у "
+        "`show-chart` (разбирается тем же парсером).\n"
+    )
+    out.append(
+        "**Чего здесь нет: бхава-балы.** Сайт в этом ответе силу домов не "
+        "отдаёт вообще — только геометрию и состав. Ближайшее, что есть среди "
+        "открытых действий, — матрица дрик-балы на дома в `show-bala`.\n"
+    )
+
+    out.append("## 1. Один дом целиком\n")
+    as_json(out, bhava["houses"][0])
+
+    out.append("## 2. Все двенадцать\n")
+    out.append(
+        "Дома неравные: каждый начинается в одном знаке, а заканчивается в "
+        "следующем, и размеры гуляют от 24° до 35°.\n"
+    )
+    table(
+        out,
+        ["Дом", "Куспид", "Начало", "Конец", "Размер", "Планеты"],
+        [
+            [
+                h["house"],
+                f'{h["cusp"]["sign"]} {h["cusp"]["degrees"]}',
+                f'{h["start"]["sign"]} {h["start"]["degrees"]}',
+                f'{h["end"]["sign"]} {h["end"]["degrees"]}',
+                h["size"],
+                ", ".join(h["planets"]),
+            ]
+            for h in bhava["houses"]
+        ],
+    )
+    total = sum(h["size_decimal"] for h in bhava["houses"])
+    out.append(
+        f"Сумма размеров — {total:.4f}°, то есть дома покрывают зодиак целиком "
+        "(разница в сотые — округление секунд).\n"
+    )
+
+    out.append("## 3. Рисунок из того же ответа\n")
+    out.append(
+        "Состав домов в таблице и в рисунке сходится по всем двенадцати "
+        "(проверяется тестом). Планеты в бхава-чалите расставлены по домам, а не "
+        "по знакам, поэтому положения отличаются от D1:\n"
+    )
+    drawing: dict[int, list[str]] = {}
+    for planet in bhava["chart"]["planets"]:
+        drawing.setdefault(planet["house"], []).append(planet["code"])
+    table(
+        out,
+        ["Дом", "Знак", "Планеты в бхава-чалите"],
+        [
+            [h["house"], h["sign"]["name"], ", ".join(drawing.get(h["house"], []))]
+            for h in bhava["chart"]["houses"]
+        ],
+    )
+    out.append(
+        "Отдельное действие `show-chart-bhava` отдаёт только этот рисунок, без "
+        "таблицы, и разбирается функцией `parse_show_chart`.\n"
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
@@ -956,6 +1032,7 @@ DOCUMENTS = {
     "show-bala": ("example-show-bala.md", build_show_bala),
     "show-yogas": ("example-show-yogas.md", build_show_yogas),
     "show-avasthas": ("example-show-avasthas.md", build_show_avasthas),
+    "show-bhava": ("example-show-bhava.md", build_show_bhava),
 }
 
 

@@ -17,6 +17,7 @@ from .chart import Chart
 from .parsers import (
     parse_show_avasthas,
     parse_show_bala,
+    parse_show_bhava,
     parse_show_chart,
     parse_show_dasha,
     parse_show_info,
@@ -183,6 +184,15 @@ def build_parser() -> argparse.ArgumentParser:
     avasthas_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     avasthas_cmd.set_defaults(handler=_cmd_show_avasthas)
 
+    bhava_cmd = sub.add_parser(
+        "show-bhava", help="Bhava Chalita houses: cusps, boundaries, size, contents"
+    )
+    _add_common_args(bhava_cmd, suppress=True)
+    _add_chart_args(bhava_cmd)
+    bhava_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    bhava_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    bhava_cmd.set_defaults(handler=_cmd_show_bhava)
+
     return parser
 
 
@@ -259,6 +269,13 @@ def _cmd_show_avasthas(args: argparse.Namespace) -> dict[str, Any]:
         with open(args.html, encoding="utf-8") as handle:
             return parse_show_avasthas(handle.read())
     return api.show_avasthas(_open_session(args), _chart(args), divisional=args.divisional)
+
+
+def _cmd_show_bhava(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_bhava(handle.read())
+    return api.show_bhava(_open_session(args), _chart(args), divisional=args.divisional)
 
 
 def _open_session(args: argparse.Namespace) -> Session:

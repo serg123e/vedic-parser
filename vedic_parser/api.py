@@ -10,6 +10,7 @@ from .chart import Chart
 from .parsers import (
     parse_show_avasthas,
     parse_show_bala,
+    parse_show_bhava,
     parse_show_chart,
     parse_show_dasha,
     parse_show_info,
@@ -175,5 +176,19 @@ def show_avasthas(session: Session, chart: Chart, divisional: str = "D1") -> dic
     """
     html = session.action("show-avasthas", chart, divisional=divisional)
     result = parse_show_avasthas(html)
+    result["divisional"] = divisional
+    return result
+
+
+def show_bhava(session: Session, chart: Chart, divisional: str = "D1") -> dict[str, Any]:
+    """The Bhava Chalita houses: cusp, boundaries, size and contents of each,
+    plus the chart drawing that goes with them.
+
+    Note this endpoint carries no Bhava Bala — the site does not report house
+    strengths here or anywhere else that is open anonymously. The closest thing
+    available is the drik bala matrix onto houses in :func:`show_bala`.
+    """
+    html = session.action("show-bhava", chart, divisional=divisional)
+    result = parse_show_bhava(html)
     result["divisional"] = divisional
     return result

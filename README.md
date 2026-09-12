@@ -12,7 +12,7 @@ chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
-**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**.
+**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**.
 
 ## Install
 
@@ -159,6 +159,16 @@ the name, so all five syllable groups come with their strength. Plus
 `shayanadi_legend` (the states present, with a planet count each) and the site's
 `shayanadi_note`. Every verdict carries a `tone`: green 100%, orange 50%, red
 below that.
+
+### What show-bhava returns
+
+The twelve Bhava Chalita `houses` — cusp, start, end (each as sign plus
+degrees), `size` and the bodies in them — plus the `chart` drawing that comes
+with them, parsed in `show-chart`'s shape. Houses are unequal and tile 360°.
+
+There is no Bhava Bala in this response: the site reports house geometry, not
+house strength. The only house-level strength among the open endpoints is the
+drik bala matrix onto houses in `show-bala`.
 
 ## Access notes
 

@@ -332,7 +332,32 @@ api.show_avasthas(session, chart, divisional="D1")
 `tone` — цвет, которым сайт пометил вердикт, и он следует за силой: 100% зелёный,
 50% оранжевый, 25/15/0% красный. Сумма `count` по легенде равна числу планет.
 
-### 4.7 `show_bala` — силы планет
+### 4.7 `show_bhava` — дома бхава-чалиты
+
+```python
+api.show_bhava(session, chart, divisional="D1")
+```
+
+```python
+{
+  "divisional": "D1",
+  "houses": [                        # 12, по порядку
+    {"house": 1,
+     "cusp":  {"sign": "Aries",  "degrees": "00°33'53''", "degrees_decimal": 0.564722},
+     "start": {"sign": "Pisces", "degrees": "12°48'51''", "degrees_decimal": 12.814167},
+     "end":   {"sign": "Aries",  "degrees": "12°48'51''", "degrees_decimal": 12.814167},
+     "size": "29°59'58''", "size_decimal": 29.999444,
+     "planets": ["As"]},
+  ],
+  "chart": {...},                    # рисунок в форме show_chart
+}
+```
+
+**Бхава-балы здесь нет** — сайт отдаёт только геометрию домов и их состав.
+Единственная сила уровня домов среди открытых действий — матрица дрик-балы на
+дома в `show_bala`. Дома неравные, в сумме 360°.
+
+### 4.8 `show_bala` — силы планет
 
 ```python
 api.show_bala(session, chart, divisional="D1", full=True)
