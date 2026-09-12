@@ -5,8 +5,9 @@ parsing what it returns. The site has no JSON API — everything comes back as
 HTML — so these tools call its `actions.php` endpoints and turn the fragments
 into plain data.
 
-`docs/recon.md` maps out the endpoints, the response structure and the access
-quirks. `scripts/probe.sh` dumps raw responses for inspection.
+`docs/example-show-info.md` shows the data these tools return for one real
+chart. `docs/recon.md` maps out the endpoints, the response structure and the
+access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Two tools so far: **session** and **show-info**.
 
@@ -93,3 +94,5 @@ python -m pytest
 
 The suite is offline: the parser runs against recorded responses in
 `tests/fixtures/`, and the session tests replace the HTTP layer with a stub.
+`python scripts/example_md.py` regenerates the example document from those same
+fixtures.
