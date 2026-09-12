@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from vedic_parser import parse_show_chart, parse_show_info  # noqa: E402
+from vedic_parser import parse_show_chart, parse_show_info, parse_show_other  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures"
 SIGNS = ("Ar", "Ta", "Ge", "Cn", "Le", "Vi", "Li", "Sc", "Sg", "Cp", "Aq", "Pi")
@@ -345,9 +345,137 @@ def build_show_chart() -> list[str]:
     return out
 
 
+def build_show_other() -> list[str]:
+    other = fixture("show-other-en-d1.html", parse_show_other)
+    ru = fixture("analyse-other-ru.html", parse_show_other)
+
+    out = ["# Пример данных: `show-other`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-other --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4",
+    )
+    out.append(
+        "Это вкладка «Разное» — пять разнородных таблиц в одном ответе: "
+        "`lagnas`, `panchanga`, `upagrahas`, `points`, `chakras`.\n"
+    )
+    out.append(
+        "**Важно про разметку:** здесь, в отличие от остальных действий, нет ни "
+        "классов, ни `href`, ни tooltip'ов — только текст. Поэтому строки и "
+        "колонки опознаются по позиции, а канонические ключи (`bhava_lagna`, "
+        "`gulika`, `ayanamsa`, …) приделывает парсер. Подписи сайта сохраняются "
+        "рядом в `name` / `label`.\n"
+    )
+
+    out.append("## 1. Особые лагны и спхуты\n")
+    out.append("15 строк в фиксированном порядке:\n")
+    table(
+        out,
+        ["Ключ", "Название", "Градусы", "Дец.", "Знак", "Накшатра", "Пада", "Упр."],
+        [
+            [
+                f'`{x["key"]}`', x["name"], x["degrees"], x["degrees_decimal"], x["sign"],
+                (x["nakshatra"] or {}).get("name"), (x["nakshatra"] or {}).get("pada"),
+                (x["nakshatra"] or {}).get("lord"),
+            ]
+            for x in other["lagnas"]
+        ],
+    )
+    out.append("Одна запись как JSON:\n")
+    as_json(out, other["lagnas"][0])
+
+    out.append("## 2. Панчанга\n")
+    out.append(
+        "Семь значений момента рождения. Титхи, карана и йога приходят с "
+        "управителем через запятую — парсер его отделяет в `lord` (и признаёт "
+        "только код планеты, чтобы не откусить часть названия):\n"
+    )
+    table(
+        out,
+        ["Ключ", "Подпись", "Значение", "Управитель"],
+        [
+            [f"`{key}`", item["label"], item["value"], item.get("lord")]
+            for key, item in other["panchanga"].items()
+        ],
+    )
+
+    out.append("## 3. Упаграхи\n")
+    out.append("11 теневых точек — как лагны, но ещё с домом:\n")
+    table(
+        out,
+        ["Ключ", "Название", "Градусы", "Знак", "Накшатра", "Пада", "Дом"],
+        [
+            [
+                f'`{x["key"]}`', x["name"], x["degrees"], x["sign"],
+                (x["nakshatra"] or {}).get("name"), (x["nakshatra"] or {}).get("pada"),
+                x["house"],
+            ]
+            for x in other["upagrahas"]
+        ],
+    )
+
+    out.append("## 4. Отдельные точки\n")
+    out.append(
+        "Ячейки бывают многострочными (одно и то же от Асцендента и от Луны — "
+        "приходит списком) и перечислением кодов планет (тоже списком):\n"
+    )
+    table(
+        out,
+        ["Ключ", "Подпись", "Значение"],
+        [
+            [
+                f"`{key}`", item["label"],
+                "<br>".join(item["value"]) if isinstance(item["value"], list) else item["value"],
+            ]
+            for key, item in other["points"].items()
+        ],
+    )
+
+    out.append("## 5. Чакры\n")
+    out.append("Номер и название сайт кладёт в одну ячейку (`3 | Manipura`), парсер их делит:\n")
+    table(
+        out,
+        ["№", "Название", "Значение", "Элемент", "Знаки", "Планеты", "Что в знаке"],
+        [
+            [
+                c["number"], c["name"], c["meaning"], c["element"],
+                ", ".join(c["signs"]), ", ".join(c["planets"]), ", ".join(c["in_sign"]),
+            ]
+            for c in other["chakras"]
+        ],
+    )
+
+    out.append("## 6. Варга и язык\n")
+    out.append(
+        "`--divisional D9` пересчитывает лагны и упаграхи — и, в отличие от "
+        "`show-info`, **знак здесь тоже от варги**. Бхава Лагна: D1 — "
+        f'{other["lagnas"][0]["degrees"]} {other["lagnas"][0]["sign"]}, '
+        "D9 — 18°35'06'' Gemini (это ровно навамша от первой). Панчанга и "
+        "айянамша от варги не зависят: это свойства момента, а не карты.\n"
+    )
+    out.append("Русский ответ даёт те же ключи, меняются подписи:\n")
+    table(
+        out,
+        ["Ключ", "en", "ru", "Градусы (совпадают)"],
+        [
+            [f'`{en["key"]}`', en["name"], ru_row["name"], en["degrees"]]
+            for en, ru_row in list(zip(other["lagnas"], ru["lagnas"]))[:5]
+        ],
+    )
+    out.append(
+        "Титхи по-русски: "
+        f'`{ru["panchanga"]["tithi"]["value"]}` + управитель `{ru["panchanga"]["tithi"]["lord"]}` '
+        "— код остаётся латиницей.\n"
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
+    "show-other": ("example-show-other.md", build_show_other),
 }
 
 

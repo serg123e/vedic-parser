@@ -14,7 +14,7 @@ from typing import Any, Sequence
 
 from . import api
 from .chart import Chart
-from .parsers import parse_show_chart, parse_show_info
+from .parsers import parse_show_chart, parse_show_info, parse_show_other
 from .session import BASE_BY_LANG, Session, VedicHoroError
 
 
@@ -120,6 +120,15 @@ def build_parser() -> argparse.ArgumentParser:
     chart_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     chart_cmd.set_defaults(handler=_cmd_show_chart)
 
+    other_cmd = sub.add_parser(
+        "show-other", help="special lagnas, panchanga, upagrahas, points and chakras"
+    )
+    _add_common_args(other_cmd, suppress=True)
+    _add_chart_args(other_cmd)
+    other_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    other_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    other_cmd.set_defaults(handler=_cmd_show_other)
+
     return parser
 
 
@@ -148,6 +157,13 @@ def _cmd_show_chart(args: argparse.Namespace) -> dict[str, Any]:
     return api.show_chart(
         _open_session(args), _chart(args), divisional=args.divisional, style=args.style
     )
+
+
+def _cmd_show_other(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_other(handle.read())
+    return api.show_other(_open_session(args), _chart(args), divisional=args.divisional)
 
 
 def _open_session(args: argparse.Namespace) -> Session:

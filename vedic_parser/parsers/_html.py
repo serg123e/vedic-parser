@@ -13,6 +13,8 @@ SIGN_CODES = (
 )
 
 SIGN_HREF_RE = re.compile(r"sign\?(\w+)")
+# "Ashvini (1, Ke)" / "Ашвини (1, Ke)"
+NAKSHATRA_LABEL_RE = re.compile(r"^(?P<name>.+?)\s*\(\s*(?P<pada>\d+)\s*,\s*(?P<lord>\w+)\s*\)$")
 HOUSE_HREF_RE = re.compile(r"house\?(\d+)")
 
 
@@ -82,3 +84,21 @@ def selected_option(select: Tag | None) -> str | None:
         return None
     option = select.select_one("option[selected]")
     return attr(option, "value") if option else None
+
+
+def nakshatra_label(raw: str | None) -> dict[str, object] | None:
+    """``Ashvini (1, Ke)`` -> name, pada and the pada's lord.
+
+    The name is localised, the lord code is not. Text that does not carry a
+    pada keeps the whole label as the name.
+    """
+    if not raw:
+        return None
+    match = NAKSHATRA_LABEL_RE.match(raw)
+    if not match:
+        return {"name": raw, "pada": None, "lord": None}
+    return {
+        "name": match.group("name"),
+        "pada": int(match.group("pada")),
+        "lord": match.group("lord"),
+    }

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .chart import Chart
-from .parsers import parse_show_chart, parse_show_info
+from .parsers import parse_show_chart, parse_show_info, parse_show_other
 from .session import Session
 
 
@@ -53,4 +53,17 @@ def show_chart(
     )
     result = parse_show_chart(html)
     result["divisional"] = divisional  # the markup echoes the session default
+    return result
+
+
+def show_other(session: Session, chart: Chart, divisional: str = "D1") -> dict[str, Any]:
+    """The "Other" tab: special lagnas and sphutas, panchanga, upagrahas,
+    single points (ayanamsa, badhaka, dagdha rasi, …) and the chakras.
+
+    Only the parts that depend on a varga follow ``divisional``; the panchanga
+    and the ayanamsa are properties of the moment, not of a chart.
+    """
+    html = session.action("show-other", chart, divisional=divisional)
+    result = parse_show_other(html)
+    result["divisional"] = divisional
     return result

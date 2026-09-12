@@ -17,12 +17,10 @@ from typing import Any
 from bs4 import BeautifulSoup, Tag
 
 from ..chart import parse_degrees
-from ._html import PLANET_CODES, code_from_class, href_group, selected_option
+from ._html import PLANET_CODES, code_from_class, href_group, nakshatra_label, selected_option
 from ._html import text as _text
 from ._html import value as _value
 
-# "Ashvini (1, Ke)" / "Ашвини (1, Ke)"
-NAKSHATRA_RE = re.compile(r"^(?P<name>.+?)\s*\(\s*(?P<pada>\d+)\s*,\s*(?P<lord>\w+)\s*\)$")
 LORD_HREF_RE = re.compile(r"lord-in\?(\d+)-(\d+)")
 IN_HOUSE_HREF_RE = re.compile(r"in-house\?\w+-(\d+)")
 IN_SIGN_HREF_RE = re.compile(r"in-sign\?\w+-(\w+)")
@@ -160,21 +158,10 @@ def _parse_rasi(cell: Tag | None) -> dict[str, Any] | None:
 
 
 def _parse_nakshatra(cell: Tag | None) -> dict[str, Any] | None:
-    text = _value(cell)
-    if text is None:
+    parsed = nakshatra_label(_value(cell))
+    if parsed is None:
         return None
-    parsed: dict[str, Any] = {
-        "code": href_group(cell.find("a"), NAKSHATRA_HREF_RE),
-        "name": text,
-        "pada": None,
-        "lord": None,
-    }
-    match = NAKSHATRA_RE.match(text)
-    if match:
-        parsed["name"] = match.group("name")
-        parsed["pada"] = int(match.group("pada"))
-        parsed["lord"] = match.group("lord")
-    return parsed
+    return {"code": href_group(cell.find("a"), NAKSHATRA_HREF_RE), **parsed}
 
 
 def _parse_house(cell: Tag | None) -> int | None:

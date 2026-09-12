@@ -9,7 +9,7 @@ The `docs/example-*.md` documents show the data these tools return for one real
 chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
-Tools so far: **session**, **show-info**, **show-chart**.
+Tools so far: **session**, **show-info**, **show-chart**, **show-other**.
 
 ## Install
 
@@ -34,6 +34,10 @@ vedic-parser show-info ... --from 2
 # one divisional chart: twelve houses with their signs, planets and aspects
 vedic-parser show-chart --name Ss --date 07.08.1983 --time 23:00:00 \
     --latitude 55.45 --longitude 37.37 --timezone +4 --divisional D9
+
+# the "Other" tab: special lagnas, panchanga, upagrahas, points, chakras
+vedic-parser show-other --name Ss --date 07.08.1983 --time 23:00:00 \
+    --latitude 55.45 --longitude 37.37 --timezone +4
 
 # parse a response saved earlier, without touching the network
 vedic-parser show-info ... --html response.html
@@ -86,6 +90,19 @@ Twelve houses in order, each with its sign (code, number, name), the bodies in
 it (whole degrees, retrograde flag) and the bodies aspecting it; plus the same
 placements as a flat `planets` list. `--style North|South` only changes what the
 site renders — the two very different markups parse to the same shape.
+
+### What show-other returns
+
+`lagnas` (15 special lagnas and sphutas), `panchanga` (sunrise, sunset, hora,
+vara, tithi, karana, yoga — each with the planet ruling it split off),
+`upagrahas` (11 shadow points with their house), `points` (ayanamsa, sahayogi,
+badhaka, dagdha rasi, 22nd drekkana, 64th navamsa, sarpa drekkana, visha
+navamsa) and `chakras`.
+
+This is the one response with no classes or hrefs anywhere, so rows and columns
+are identified by position and the stable `key` fields are supplied by the
+parser; the site's own wording stays in `name` / `label`. Unlike `show-info`,
+signs here do follow the requested varga.
 
 ## Access notes
 
