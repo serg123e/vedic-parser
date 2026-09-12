@@ -298,7 +298,41 @@ api.show_yogas(session, chart, divisional="D1")
 может прийти дважды — отдельно «от Луны»; суффикс локализован, парсер его не
 разбирает.
 
-### 4.6 `show_bala` — силы планет
+### 4.6 `show_avasthas` — состояния планет
+
+```python
+api.show_avasthas(session, chart, divisional="D1")
+```
+
+```python
+{
+  "divisional": "D1",
+  "planets": [                       # 9: семь планет + Раху и Кету
+    {"code": "Su", "name": "Sun",
+     "baladi":    {"state": "Young", "strength_percent": 50, "tone": "orange"},
+     "jagradadi": {"state": "Dreaming", "strength_percent": 50, "tone": "orange"},
+     "deeptadi": [                   # состояния по настроению + причины
+       {"state": "Relaxed, inspired, open and supported", "tone": "green",
+        "reason": "Benefic influence: Ju", "planets": ["Ju"], "signs": []},
+     ],
+     "shayanadi": {
+       "state": "Gaining", "tone": "red", "effect": "...",
+       "by_letter_group": [          # 5 групп: сила зависит от первого слога имени
+         {"letters": ["a", "bh", "chh", "d`", "dh``", "k", "v"],
+          "strength_percent": 50, "tone": "orange"},
+       ]}},
+  ],
+  "shayanadi_legend": [              # только встретившиеся состояния
+    {"state": "Resting", "count": 1, "tone": "red", "description": "..."},
+  ],
+  "shayanadi_note": "Note: to determine the strength ...",
+}
+```
+
+`tone` — цвет, которым сайт пометил вердикт, и он следует за силой: 100% зелёный,
+50% оранжевый, 25/15/0% красный. Сумма `count` по легенде равна числу планет.
+
+### 4.7 `show_bala` — силы планет
 
 ```python
 api.show_bala(session, chart, divisional="D1", full=True)

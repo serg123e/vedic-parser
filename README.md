@@ -12,7 +12,7 @@ chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
-**show-dasha**, **show-bala**, **show-yogas**.
+**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**.
 
 ## Install
 
@@ -149,6 +149,16 @@ and `condition`. The category comes from the row's `type` attribute, which is
 localised, so it is mapped to a stable `category` key (`mahapurusha`, `solar`,
 `lunar`, `nabhasa`, `raja_dhana`, `other`) with the original kept in
 `category_label`.
+
+### What show-avasthas returns
+
+`planets` (nine, nodes included) with `baladi`, `jagradadi`, the `deeptadi`
+moods paired with the reason that caused each (planet and sign codes pulled out
+of that text), and `shayanadi` — whose strength depends on the first syllable of
+the name, so all five syllable groups come with their strength. Plus
+`shayanadi_legend` (the states present, with a planet count each) and the site's
+`shayanadi_note`. Every verdict carries a `tone`: green 100%, orange 50%, red
+below that.
 
 ## Access notes
 

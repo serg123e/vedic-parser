@@ -8,6 +8,7 @@ from datetime import datetime
 
 from .chart import Chart
 from .parsers import (
+    parse_show_avasthas,
     parse_show_bala,
     parse_show_chart,
     parse_show_dasha,
@@ -160,5 +161,19 @@ def show_yogas(session: Session, chart: Chart, divisional: str = "D1") -> dict[s
     """
     html = session.action("show-yogas", chart, divisional=divisional)
     result = parse_show_yogas(html)
+    result["divisional"] = divisional
+    return result
+
+
+def show_avasthas(session: Session, chart: Chart, divisional: str = "D1") -> dict[str, Any]:
+    """The states of the planets: Baladi, Jagradadi, Deeptadi/Lajjitadi and
+    Shayanadi avasthas, plus the legend of the Shayanadi states in this chart.
+
+    The Shayanadi strength depends on the first syllable of the person's name,
+    so the site reports it for all five syllable groups and leaves the choice
+    to the reader.
+    """
+    html = session.action("show-avasthas", chart, divisional=divisional)
+    result = parse_show_avasthas(html)
     result["divisional"] = divisional
     return result

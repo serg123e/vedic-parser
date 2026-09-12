@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from vedic_parser import (  # noqa: E402
+    parse_show_avasthas,
     parse_show_bala,
     parse_show_chart,
     parse_show_dasha,
@@ -842,6 +843,111 @@ def build_show_yogas() -> list[str]:
     return out
 
 
+def build_show_avasthas() -> list[str]:
+    en = fixture("show-avasthas-en-d1.html", parse_show_avasthas)
+    ru = fixture("show-avasthas-ru-d1.html", parse_show_avasthas)
+    sun = next(p for p in en["planets"] if p["code"] == "Su")
+
+    out = ["# Пример данных: `show-avasthas`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-avasthas --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4",
+    )
+    out.append(
+        "Состояния планет: `planets` (9 записей — с узлами), `shayanadi_legend` "
+        "и `shayanadi_note`. В ответе три таблицы: авастхи по возрасту и "
+        "пробуждённости, авастхи по настроению с причинами, шаянади по "
+        "деятельности.\n"
+    )
+    out.append(
+        "Вердикт сайт кодирует цветом, и цвет строго следует за силой: 100% — "
+        "зелёный, 50% — оранжевый, 25/15/0% — красный. Парсер отдаёт класс как "
+        "`tone`, ничего не переосмысливая.\n"
+    )
+
+    out.append("## 1. Балади и джаградади\n")
+    table(
+        out,
+        ["Планета", "Балади (по возрасту)", "Сила", "Джаградади (по пробуждённости)", "Сила"],
+        [
+            [p["code"] + " " + p["name"], p["baladi"]["state"],
+             f'{p["baladi"]["strength_percent"]}%', p["jagradadi"]["state"],
+             f'{p["jagradadi"]["strength_percent"]}%']
+            for p in en["planets"]
+        ],
+    )
+
+    out.append("## 2. Авастхи по настроению\n")
+    out.append(
+        "Диптади и Ладжджитади приходят двумя параллельными колонками: состояние "
+        "и причина. Причина называет виновников, и коды планет и знаков в ней "
+        "остаются латиницей на обоих языках — парсер вытаскивает их точным "
+        "совпадением. Солнце этой карты:\n"
+    )
+    table(
+        out,
+        ["Состояние", "Тон", "Причина", "Планеты", "Знаки"],
+        [
+            [m["state"], m["tone"], m["reason"], ", ".join(m["planets"]), ", ".join(m["signs"])]
+            for m in sun["deeptadi"]
+        ],
+    )
+
+    out.append("## 3. Шаянади-авастхи\n")
+    out.append(f'_{en["shayanadi_note"]}_\n')
+    out.append(
+        "Поэтому сила приходит не одним числом, а по всем пяти группам слогов — "
+        "выбирать нужную должен тот, кто знает имя:\n"
+    )
+    letters = [" ".join(g["letters"]) for g in sun["shayanadi"]["by_letter_group"]]
+    table(
+        out,
+        ["Планета", "Состояние"] + letters,
+        [
+            [p["code"], p["shayanadi"]["state"]]
+            + [f'{g["strength_percent"]}%' for g in p["shayanadi"]["by_letter_group"]]
+            for p in en["planets"]
+        ],
+    )
+    out.append("Запись одной планеты целиком:\n")
+    as_json(out, sun["shayanadi"])
+
+    out.append("## 4. Легенда шаянади\n")
+    out.append(
+        "Перечислены только состояния, встретившиеся в этой карте; число в "
+        "скобках — сколько планет в этом состоянии (в сумме ровно "
+        f'{sum(e["count"] for e in en["shayanadi_legend"])} — все планеты):\n'
+    )
+    table(
+        out,
+        ["Состояние", "Планет", "Тон", "Описание"],
+        [
+            [e["state"], e["count"], e["tone"], e["description"]]
+            for e in en["shayanadi_legend"]
+        ],
+    )
+
+    out.append("## 5. Русский ответ\n")
+    ru_sun = next(p for p in ru["planets"] if p["code"] == "Su")
+    table(
+        out,
+        ["Поле", "en", "ru"],
+        [
+            ["Балади", sun["baladi"]["state"], ru_sun["baladi"]["state"]],
+            ["Джаградади", sun["jagradadi"]["state"], ru_sun["jagradadi"]["state"]],
+            ["Шаянади", sun["shayanadi"]["state"], ru_sun["shayanadi"]["state"]],
+            ["Сила (совпадает)", f'{sun["baladi"]["strength_percent"]}%',
+             f'{ru_sun["baladi"]["strength_percent"]}%'],
+            ["Группы слогов (совпадают)", " ".join(sun["shayanadi"]["by_letter_group"][0]["letters"]),
+             " ".join(ru_sun["shayanadi"]["by_letter_group"][0]["letters"])],
+        ],
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
@@ -849,6 +955,7 @@ DOCUMENTS = {
     "show-dasha": ("example-show-dasha.md", build_show_dasha),
     "show-bala": ("example-show-bala.md", build_show_bala),
     "show-yogas": ("example-show-yogas.md", build_show_yogas),
+    "show-avasthas": ("example-show-avasthas.md", build_show_avasthas),
 }
 
 

@@ -15,6 +15,7 @@ from typing import Any, Sequence
 from . import api
 from .chart import Chart
 from .parsers import (
+    parse_show_avasthas,
     parse_show_bala,
     parse_show_chart,
     parse_show_dasha,
@@ -175,6 +176,13 @@ def build_parser() -> argparse.ArgumentParser:
     yogas_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     yogas_cmd.set_defaults(handler=_cmd_show_yogas)
 
+    avasthas_cmd = sub.add_parser("show-avasthas", help="the states of the planets")
+    _add_common_args(avasthas_cmd, suppress=True)
+    _add_chart_args(avasthas_cmd)
+    avasthas_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    avasthas_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    avasthas_cmd.set_defaults(handler=_cmd_show_avasthas)
+
     return parser
 
 
@@ -244,6 +252,13 @@ def _cmd_show_yogas(args: argparse.Namespace) -> dict[str, Any]:
         with open(args.html, encoding="utf-8") as handle:
             return parse_show_yogas(handle.read())
     return api.show_yogas(_open_session(args), _chart(args), divisional=args.divisional)
+
+
+def _cmd_show_avasthas(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_avasthas(handle.read())
+    return api.show_avasthas(_open_session(args), _chart(args), divisional=args.divisional)
 
 
 def _open_session(args: argparse.Namespace) -> Session:
