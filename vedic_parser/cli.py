@@ -22,6 +22,7 @@ from .parsers import (
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
+    parse_show_sade_sati,
     parse_show_yogas,
 )
 from .session import BASE_BY_LANG, Session, VedicHoroError
@@ -193,6 +194,14 @@ def build_parser() -> argparse.ArgumentParser:
     bhava_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     bhava_cmd.set_defaults(handler=_cmd_show_bhava)
 
+    sade_cmd = sub.add_parser(
+        "show-sade-sati", help="Saturn's passages over the natal Moon"
+    )
+    _add_common_args(sade_cmd, suppress=True)
+    _add_chart_args(sade_cmd)
+    sade_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    sade_cmd.set_defaults(handler=_cmd_show_sade_sati)
+
     return parser
 
 
@@ -276,6 +285,13 @@ def _cmd_show_bhava(args: argparse.Namespace) -> dict[str, Any]:
         with open(args.html, encoding="utf-8") as handle:
             return parse_show_bhava(handle.read())
     return api.show_bhava(_open_session(args), _chart(args), divisional=args.divisional)
+
+
+def _cmd_show_sade_sati(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_sade_sati(handle.read())
+    return api.show_sade_sati(_open_session(args), _chart(args))
 
 
 def _open_session(args: argparse.Namespace) -> Session:

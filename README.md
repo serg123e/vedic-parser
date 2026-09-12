@@ -12,7 +12,7 @@ chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
-**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**.
+**show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**, **show-sade-sati**.
 
 ## Install
 
@@ -169,6 +169,14 @@ with them, parsed in `show-chart`'s shape. Houses are unequal and tile 360°.
 There is no Bhava Bala in this response: the site reports house geometry, not
 house strength. The only house-level strength among the open endpoints is the
 drik bala matrix onto houses in `show-bala`.
+
+### What show-sade-sati returns
+
+Both methods the site offers, each with four occurrences over a lifetime. An
+occurrence has the continuous main span plus every dated `segment` with Saturn's
+placement; `within_main` separates the phases that tile that span from the
+brushes outside it. Dates come from the machine-readable `data` attributes, so
+they are full ISO moments rather than the rendered labels.
 
 ## Access notes
 

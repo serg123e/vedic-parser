@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 
 from bs4 import Tag
 
@@ -16,6 +17,9 @@ SIGN_HREF_RE = re.compile(r"sign\?(\w+)")
 # "Ashvini (1, Ke)" / "Ашвини (1, Ke)"
 NAKSHATRA_LABEL_RE = re.compile(r"^(?P<name>.+?)\s*\(\s*(?P<pada>\d+)\s*,\s*(?P<lord>\w+)\s*\)$")
 HOUSE_HREF_RE = re.compile(r"house\?(\d+)")
+
+#: How the site writes a moment in its machine-readable attributes.
+MOMENT_FORMAT = "%d.%m.%Y %H:%M"
 
 
 def text(node: Tag | None) -> str:
@@ -102,3 +106,18 @@ def nakshatra_label(raw: str | None) -> dict[str, object] | None:
         "pada": int(match.group("pada")),
         "lord": match.group("lord"),
     }
+
+
+def iso_moment(raw: str | None) -> str | None:
+    """``26.11.1981 11:56`` -> ``1981-11-26T11:56``.
+
+    This is the format of every machine-readable date the site emits — the
+    ``start``/``end`` attributes of a dasha row and the ``data`` attribute of a
+    Sade Sati date.
+    """
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw.strip(), MOMENT_FORMAT).isoformat(timespec="minutes")
+    except ValueError:
+        return None

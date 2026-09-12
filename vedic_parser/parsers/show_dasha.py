@@ -19,17 +19,13 @@ names to sign codes in the current language.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from bs4 import BeautifulSoup, Tag
 
-from ._html import PLANET_CODES, code_from_class, int_or_none
+from ._html import PLANET_CODES, code_from_class, int_or_none, iso_moment
 from ._html import text as _text
 from ._html import value as _value
-
-# The format of the start/end attributes.
-BOUNDARY_FORMAT = "%d.%m.%Y %H:%M"
 
 PLANET_DASHAS = ("vimshottari", "yogini", "ashtottari", "navamsa")
 SIGN_DASHAS = ("chara_rao", "narayana")
@@ -68,8 +64,8 @@ def _parse_period(row: Tag) -> dict[str, Any] | None:
         lords = []
 
     return {
-        "start": _boundary(row.get("start")),
-        "end": _boundary(row.get("end")),
+        "start": iso_moment(row.get("start")),
+        "end": iso_moment(row.get("end")),
         "lords": [lord for lord in lords if lord],
         "labels": labels,
         # The visible date and time, as the site formatted them.
@@ -78,13 +74,3 @@ def _parse_period(row: Tag) -> dict[str, Any] | None:
         # Age reached at the start of the period; "-" before the birth date.
         "age": int_or_none(_text(cells[3])) if len(cells) > 3 else None,
     }
-
-
-def _boundary(raw: str | None) -> str | None:
-    """``26.11.1981 11:56`` -> ``1981-11-26T11:56``."""
-    if not raw:
-        return None
-    try:
-        return datetime.strptime(raw.strip(), BOUNDARY_FORMAT).isoformat(timespec="minutes")
-    except ValueError:
-        return None

@@ -357,7 +357,34 @@ api.show_bhava(session, chart, divisional="D1")
 Единственная сила уровня домов среди открытых действий — матрица дрик-балы на
 дома в `show_bala`. Дома неравные, в сумме 360°.
 
-### 4.8 `show_bala` — силы планет
+### 4.8 `show_sade_sati` — проходы Сатурна по Луне
+
+```python
+api.show_sade_sati(session, chart)     # варга не передаётся
+```
+
+```python
+{
+  "methods": [                         # два: традиционный и Шри Х.Н. Катве
+    {"title": "Sade Sati (traditional)",
+     "periods": [                      # по четыре на жизнь
+       {"title": "FIRST SADE SATI",
+        "start": "2003-04-08T00:00",   # непрерывный основной отрезок
+        "end": "2009-09-10T00:00",
+        "segments": [
+          {"start": "2003-04-08T00:00", "end": "2004-09-06T00:00",
+           "description": "Saturn in 12th in Gemini",
+           "house": 12,                # цифра из описания
+           "within_main": True},       # False — касание вне основного отрезка
+        ]}]}
+  ],
+}
+```
+
+Фазы с `within_main: True` стыкуются встык и покрывают основной отрезок
+целиком. Даты берутся из атрибутов `data`, а не из подписей.
+
+### 4.9 `show_bala` — силы планет
 
 ```python
 api.show_bala(session, chart, divisional="D1", full=True)

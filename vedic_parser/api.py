@@ -15,6 +15,7 @@ from .parsers import (
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
+    parse_show_sade_sati,
     parse_show_yogas,
 )
 from .session import Session
@@ -192,3 +193,14 @@ def show_bhava(session: Session, chart: Chart, divisional: str = "D1") -> dict[s
     result = parse_show_bhava(html)
     result["divisional"] = divisional
     return result
+
+
+def show_sade_sati(session: Session, chart: Chart) -> dict[str, Any]:
+    """Saturn's passages over the natal Moon, by both methods the site offers.
+
+    Takes no varga: Sade Sati is reckoned from the natal Moon's sign. Each
+    method reports four occurrences across a lifetime, so this covers dates far
+    beyond a normal span.
+    """
+    html = session.action("show-sade-sati", chart)
+    return parse_show_sade_sati(html)

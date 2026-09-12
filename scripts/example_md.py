@@ -25,6 +25,7 @@ from vedic_parser import (  # noqa: E402
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
+    parse_show_sade_sati,
     parse_show_yogas,
 )
 
@@ -1024,6 +1025,83 @@ def build_show_bhava() -> list[str]:
     return out
 
 
+def build_show_sade_sati() -> list[str]:
+    sade = fixture("show-sade-sati-en.html", parse_show_sade_sati)
+
+    out = ["# Пример данных: `show-sade-sati`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-sade-sati --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4",
+    )
+    out.append(
+        "Проходы Сатурна по знаку натальной Луны. Варга не передаётся — саде-сати "
+        "считается от Луны. Сайт даёт **два метода**, в каждом по четыре периода "
+        "на всю жизнь, поэтому даты уходят далеко за пределы обычного срока.\n"
+    )
+    out.append(
+        "Разметка здесь рыхлая — заголовки, вложенные div'ы, оформление, — но "
+        "даты машинные:\n"
+    )
+    code_block(out, "html", '<span class="data" data="23.07.2002 00:00">23 Jul 2002</span>')
+    out.append(
+        "Парсер берёт их из `data`, а не из подписи. Плюс обходит баг вёрстки: у "
+        "контейнера с фазами не закрыта кавычка в `style`, из-за чего любой "
+        "парсер съедает первый `<u>` — поэтому сегменты ищутся по самим датам, а "
+        "не по обёртке.\n"
+    )
+
+    out.append("## 1. Что где\n")
+    table(
+        out,
+        ["Метод", "Период", "Начало", "Конец", "Сегментов"],
+        [
+            [m["title"], p["title"], p["start"], p["end"], len(p["segments"])]
+            for m in sade["methods"]
+            for p in m["periods"]
+        ],
+    )
+
+    first = sade["methods"][0]["periods"][0]
+    out.append("## 2. Первый период подробно\n")
+    out.append(
+        "`start`/`end` — непрерывный основной период, `segments` — все отрезки с "
+        "положением Сатурна. `within_main` отделяет фазы внутри периода от "
+        "касаний снаружи: Сатурн заходит в знак, разворачивается ретроградно и "
+        "выходит обратно, и такие заходы сайт показывает отдельно.\n"
+    )
+    table(
+        out,
+        ["Начало", "Конец", "Положение", "Дом", "Внутри периода"],
+        [
+            [s["start"][:10], s["end"][:10], s["description"], s["house"],
+             "да" if s["within_main"] else "нет"]
+            for s in first["segments"]
+        ],
+    )
+    out.append("Одна запись как JSON:\n")
+    as_json(out, first["segments"][1])
+    out.append(
+        "Фазы внутри периода стыкуются встык и покрывают его целиком — от "
+        f'`{first["start"]}` до `{first["end"]}` (проверяется тестом по всем '
+        "восьми периодам обоих методов).\n"
+    )
+
+    houses = sorted({
+        s["house"] for m in sade["methods"] for p in m["periods"] for s in p["segments"]
+    })
+    out.append("## 3. Дома\n")
+    out.append(
+        f"В описаниях встречаются дома {houses} — 12-й, 1-й и 2-й от Луны, то есть "
+        "сама саде-сати, плюс 11-й в методе Катве, который начинает отсчёт "
+        "раньше. Номер дома парсер вытаскивает из текста (цифра переживает "
+        "перевод, остальная формулировка — нет).\n"
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
@@ -1033,6 +1111,7 @@ DOCUMENTS = {
     "show-yogas": ("example-show-yogas.md", build_show_yogas),
     "show-avasthas": ("example-show-avasthas.md", build_show_avasthas),
     "show-bhava": ("example-show-bhava.md", build_show_bhava),
+    "show-sade-sati": ("example-show-sade-sati.md", build_show_sade_sati),
 }
 
 
