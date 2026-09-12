@@ -271,7 +271,34 @@ api.show_dasha(session, chart, dasha="vimshottari", level=2,
 `labels` на языке домена. Сопоставление имя→код для текущего языка можно взять
 из `show_chart` (там у каждого знака есть и `code`, и `name`).
 
-### 4.5 `show_bala` — силы планет
+### 4.5 `show_yogas` — образовавшиеся йоги
+
+```python
+api.show_yogas(session, chart, divisional="D1")
+```
+
+```python
+{
+  "divisional": "D1",
+  "yogas": [                         # только то, что образовалось; длина плавает
+    {"name": "Sasa",
+     "category": "mahapurusha",      # стабильный ключ, None у незнакомой
+     "category_label": "Mahapurusha",# подпись сайта, локализована
+     "planets": ["Sa"],              # коды
+     "planets_label": "Sa",
+     "all_planets": False,           # True, когда сайт пишет "All"
+     "effect": "Wandering leader of free spirit",
+     "condition": "Saturn in a kendra in own or exaltation sign"},
+  ],
+}
+```
+
+Ключи категорий: `mahapurusha`, `solar`, `lunar`, `nabhasa`, `raja_dhana`,
+`other` (таблица `CATEGORY_KEYS` в `parsers/show_yogas.py`). Одна и та же йога
+может прийти дважды — отдельно «от Луны»; суффикс локализован, парсер его не
+разбирает.
+
+### 4.6 `show_bala` — силы планет
 
 ```python
 api.show_bala(session, chart, divisional="D1", full=True)

@@ -12,7 +12,7 @@ chart. `docs/recon.md` maps out the endpoints, the response structure and the
 access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
-**show-dasha**, **show-bala**.
+**show-dasha**, **show-bala**, **show-yogas**.
 
 ## Install
 
@@ -48,6 +48,10 @@ vedic-parser show-dasha --name Ss --date 07.08.1983 --time 23:00:00 \
 
 # planetary strengths: Shad Bala, varga strengths, aspect matrices
 vedic-parser show-bala --name Ss --date 07.08.1983 --time 23:00:00 \
+    --latitude 55.45 --longitude 37.37 --timezone +4
+
+# the yogas the chart forms
+vedic-parser show-yogas --name Ss --date 07.08.1983 --time 23:00:00 \
     --latitude 55.45 --longitude 37.37 --timezone +4
 
 # parse a response saved earlier, without touching the network
@@ -136,6 +140,15 @@ Vaiseshikamsa across the four varga sets, plus the Vargottama count) and
 benefic/malefic summary rows and the nature the chart assigns to each planet.
 `--shad-bala-only` requests the lighter `show-shad-bala` endpoint; the missing
 parts come back empty.
+
+### What show-yogas returns
+
+Only the yogas the chart actually forms, each with its `name`, the `planets`
+involved (or `all_planets` when the site says "All"), and the localised `effect`
+and `condition`. The category comes from the row's `type` attribute, which is
+localised, so it is mapped to a stable `category` key (`mahapurusha`, `solar`,
+`lunar`, `nabhasa`, `raja_dhana`, `other`) with the original kept in
+`category_label`.
 
 ## Access notes
 

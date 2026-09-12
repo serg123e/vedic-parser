@@ -13,6 +13,7 @@ from .parsers import (
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
+    parse_show_yogas,
 )
 from .session import Session
 
@@ -147,5 +148,17 @@ def show_bala(
         "show-bala" if full else "show-shad-bala", chart, divisional=divisional
     )
     result = parse_show_bala(html)
+    result["divisional"] = divisional
+    return result
+
+
+def show_yogas(session: Session, chart: Chart, divisional: str = "D1") -> dict[str, Any]:
+    """The yogas the chart forms, with the planets, effect and condition of each.
+
+    Only yogas actually present are returned, so the list length varies by
+    chart (26 to 42 across the charts tried).
+    """
+    html = session.action("show-yogas", chart, divisional=divisional)
+    result = parse_show_yogas(html)
     result["divisional"] = divisional
     return result

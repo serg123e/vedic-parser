@@ -23,6 +23,7 @@ from vedic_parser import (  # noqa: E402
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
+    parse_show_yogas,
 )
 
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -757,12 +758,97 @@ def build_show_bala() -> list[str]:
     return out
 
 
+def build_show_yogas() -> list[str]:
+    en = fixture("show-yogas-en-d1.html", parse_show_yogas)
+    ru = fixture("show-yogas-ru-d1.html", parse_show_yogas)
+
+    out = ["# Пример данных: `show-yogas`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-yogas --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4",
+    )
+    out.append(
+        "Ответ — только те йоги, которые в карте **образовались**; длина списка "
+        f'зависит от карты (здесь {len(en["yogas"])}, на других картах попадалось '
+        "от 26 до 42). Разметка — голый набор `<tr>` без таблицы вокруг.\n"
+    )
+
+    out.append("## 1. Одна запись\n")
+    as_json(out, en["yogas"][0])
+
+    counts: dict[str, int] = {}
+    for yoga in en["yogas"]:
+        counts[yoga["category"]] = counts.get(yoga["category"], 0) + 1
+    out.append("## 2. Категории\n")
+    out.append(
+        "Категория лежит в атрибуте строки `type`, но переводится вместе с "
+        "интерфейсом, поэтому парсер приводит её к стабильному ключу; незнакомую "
+        "категорию он не угадывает — `category` станет `null`, а подпись "
+        "сохранится в `category_label`.\n"
+    )
+    table(
+        out,
+        ["`category`", "en", "ru", "Сколько в этой карте"],
+        [
+            [f"`{key}`", label_en, label_ru, counts.get(key)]
+            for key, label_en, label_ru in [
+                ("mahapurusha", "Mahapurusha", "Махапуруша"),
+                ("solar", "Solar", "Солнечные"),
+                ("lunar", "Lunar", "Лунные"),
+                ("nabhasa", "Nabhasa", "Набхаса"),
+                ("raja_dhana", "Raja + Dhana", "Раджа + Дхана"),
+                ("other", "Other", "Другие"),
+            ]
+        ],
+    )
+
+    out.append("## 3. Все йоги карты\n")
+    table(
+        out,
+        ["Йога", "Категория", "Планеты", "Эффект", "Условие"],
+        [
+            [
+                y["name"], f'`{y["category"]}`',
+                ", ".join(y["planets"]) or y["planets_label"],
+                y["effect"], y["condition"],
+            ]
+            for y in en["yogas"]
+        ],
+    )
+    out.append(
+        "Йога, которая образуется и от Асцендента, и от Луны, приходит двумя "
+        "строками («Sasa» и «Sasa (from Moon)») — суффикс локализован, поэтому "
+        "разбирать его парсер не пытается.\n"
+    )
+    out.append(
+        "`All` в колонке планет означает «все планеты» и остаётся английским даже "
+        "в русском ответе — это стабильный токен, отсюда булево `all_planets`.\n"
+    )
+
+    out.append("## 4. Русский ответ\n")
+    out.append("Строка в строку та же, отличаются только тексты:\n")
+    table(
+        out,
+        ["`category`", "Планеты", "en", "ru"],
+        [
+            [f'`{a["category"]}`', ", ".join(a["planets"]) or a["planets_label"],
+             a["name"], b["name"]]
+            for a, b in list(zip(en["yogas"], ru["yogas"]))[:6]
+        ],
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
     "show-other": ("example-show-other.md", build_show_other),
     "show-dasha": ("example-show-dasha.md", build_show_dasha),
     "show-bala": ("example-show-bala.md", build_show_bala),
+    "show-yogas": ("example-show-yogas.md", build_show_yogas),
 }
 
 

@@ -20,6 +20,7 @@ from .parsers import (
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
+    parse_show_yogas,
 )
 from .session import BASE_BY_LANG, Session, VedicHoroError
 
@@ -167,6 +168,13 @@ def build_parser() -> argparse.ArgumentParser:
     bala_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     bala_cmd.set_defaults(handler=_cmd_show_bala)
 
+    yogas_cmd = sub.add_parser("show-yogas", help="the yogas the chart forms")
+    _add_common_args(yogas_cmd, suppress=True)
+    _add_chart_args(yogas_cmd)
+    yogas_cmd.add_argument("--divisional", default="D1", help="varga code, D1…D60 (default: D1)")
+    yogas_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    yogas_cmd.set_defaults(handler=_cmd_show_yogas)
+
     return parser
 
 
@@ -229,6 +237,13 @@ def _cmd_show_bala(args: argparse.Namespace) -> dict[str, Any]:
         divisional=args.divisional,
         full=not args.shad_bala_only,
     )
+
+
+def _cmd_show_yogas(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_yogas(handle.read())
+    return api.show_yogas(_open_session(args), _chart(args), divisional=args.divisional)
 
 
 def _open_session(args: argparse.Namespace) -> Session:
