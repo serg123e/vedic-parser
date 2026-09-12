@@ -271,148 +271,7 @@ api.show_dasha(session, chart, dasha="vimshottari", level=2,
 `labels` на языке домена. Сопоставление имя→код для текущего языка можно взять
 из `show_chart` (там у каждого знака есть и `code`, и `name`).
 
-### 4.5 `show_yogas` — образовавшиеся йоги
-
-```python
-api.show_yogas(session, chart, divisional="D1")
-```
-
-```python
-{
-  "divisional": "D1",
-  "yogas": [                         # только то, что образовалось; длина плавает
-    {"name": "Sasa",
-     "category": "mahapurusha",      # стабильный ключ, None у незнакомой
-     "category_label": "Mahapurusha",# подпись сайта, локализована
-     "planets": ["Sa"],              # коды
-     "planets_label": "Sa",
-     "all_planets": False,           # True, когда сайт пишет "All"
-     "effect": "Wandering leader of free spirit",
-     "condition": "Saturn in a kendra in own or exaltation sign"},
-  ],
-}
-```
-
-Ключи категорий: `mahapurusha`, `solar`, `lunar`, `nabhasa`, `raja_dhana`,
-`other` (таблица `CATEGORY_KEYS` в `parsers/show_yogas.py`). Одна и та же йога
-может прийти дважды — отдельно «от Луны»; суффикс локализован, парсер его не
-разбирает.
-
-### 4.6 `show_avasthas` — состояния планет
-
-```python
-api.show_avasthas(session, chart, divisional="D1")
-```
-
-```python
-{
-  "divisional": "D1",
-  "planets": [                       # 9: семь планет + Раху и Кету
-    {"code": "Su", "name": "Sun",
-     "baladi":    {"state": "Young", "strength_percent": 50, "tone": "orange"},
-     "jagradadi": {"state": "Dreaming", "strength_percent": 50, "tone": "orange"},
-     "deeptadi": [                   # состояния по настроению + причины
-       {"state": "Relaxed, inspired, open and supported", "tone": "green",
-        "reason": "Benefic influence: Ju", "planets": ["Ju"], "signs": []},
-     ],
-     "shayanadi": {
-       "state": "Gaining", "tone": "red", "effect": "...",
-       "by_letter_group": [          # 5 групп: сила зависит от первого слога имени
-         {"letters": ["a", "bh", "chh", "d`", "dh``", "k", "v"],
-          "strength_percent": 50, "tone": "orange"},
-       ]}},
-  ],
-  "shayanadi_legend": [              # только встретившиеся состояния
-    {"state": "Resting", "count": 1, "tone": "red", "description": "..."},
-  ],
-  "shayanadi_note": "Note: to determine the strength ...",
-}
-```
-
-`tone` — цвет, которым сайт пометил вердикт, и он следует за силой: 100% зелёный,
-50% оранжевый, 25/15/0% красный. Сумма `count` по легенде равна числу планет.
-
-### 4.7 `show_bhava` — дома бхава-чалиты
-
-```python
-api.show_bhava(session, chart, divisional="D1")
-```
-
-```python
-{
-  "divisional": "D1",
-  "houses": [                        # 12, по порядку
-    {"house": 1,
-     "cusp":  {"sign": "Aries",  "degrees": "00°33'53''", "degrees_decimal": 0.564722},
-     "start": {"sign": "Pisces", "degrees": "12°48'51''", "degrees_decimal": 12.814167},
-     "end":   {"sign": "Aries",  "degrees": "12°48'51''", "degrees_decimal": 12.814167},
-     "size": "29°59'58''", "size_decimal": 29.999444,
-     "planets": ["As"]},
-  ],
-  "chart": {...},                    # рисунок в форме show_chart
-}
-```
-
-**Бхава-балы здесь нет** — сайт отдаёт только геометрию домов и их состав.
-Единственная сила уровня домов среди открытых действий — матрица дрик-балы на
-дома в `show_bala`. Дома неравные, в сумме 360°.
-
-### 4.8 `show_sade_sati` — проходы Сатурна по Луне
-
-```python
-api.show_sade_sati(session, chart)     # варга не передаётся
-```
-
-```python
-{
-  "methods": [                         # два: традиционный и Шри Х.Н. Катве
-    {"title": "Sade Sati (traditional)",
-     "periods": [                      # по четыре на жизнь
-       {"title": "FIRST SADE SATI",
-        "start": "2003-04-08T00:00",   # непрерывный основной отрезок
-        "end": "2009-09-10T00:00",
-        "segments": [
-          {"start": "2003-04-08T00:00", "end": "2004-09-06T00:00",
-           "description": "Saturn in 12th in Gemini",
-           "house": 12,                # цифра из описания
-           "within_main": True},       # False — касание вне основного отрезка
-        ]}]}
-  ],
-}
-```
-
-Фазы с `within_main: True` стыкуются встык и покрывают основной отрезок
-целиком. Даты берутся из атрибутов `data`, а не из подписей.
-
-### 4.9 `get_aspects` / `get_argala` — аспекты и аргала на знак
-
-Единственные два действия с текстовым ответом вместо HTML.
-
-```python
-api.get_aspects(session, chart, sign=4, divisional="D1")
-api.get_argala(session, chart, sign=1, type=1, divisional="D1")
-```
-
-```python
-# "Ju Sa|2 8 11"
-{"sign": 4, "planets": ["Ju", "Sa"], "signs": [2, 8, 11]}
-
-# "2 12 4 10 11 3"
-{"sign": 1, "type": 1, "signs": [2, 12, 4, 10, 11, 3],
- "argala": [2, 4, 11], "virodha": [12, 10, 3], "special": []}
-```
-
-`sign` и все числа в ответах — абсолютные номера знаков (Овен = 1). У
-`get_aspects` слева планеты, аспектирующие знак, справа — знаки, которые он
-аспектирует по раши-дришти. У `get_argala` `type=1` даёт основную аргалу и
-вародху, `type=2` — второй набор (пятое число уходит в `special`); другие
-значения `type` сайт не понимает и отвечает HTTP 500.
-
-**Ловушка:** шесть позиций всегда классические (2/4/11 и 12/10/3), но для
-знака, который занимает Кету, группы `argala` и `virodha` приходят
-поменянными местами. Парсер отдаёт группировку сайта как есть.
-
-### 4.10 `show_bala` — силы планет
+### 4.5 `show_bala` — силы планет
 
 ```python
 api.show_bala(session, chart, divisional="D1", full=True)
@@ -462,6 +321,146 @@ api.show_bala(session, chart, divisional="D1", full=True)
 * `nature` — вердикт этой карты (из цвета подписи строки), совпадает с колонкой
   естественной благотворности в `show_info`. Луна бывает вредителем.
 
+### 4.6 `show_yogas` — образовавшиеся йоги
+
+```python
+api.show_yogas(session, chart, divisional="D1")
+```
+
+```python
+{
+  "divisional": "D1",
+  "yogas": [                         # только то, что образовалось; длина плавает
+    {"name": "Sasa",
+     "category": "mahapurusha",      # стабильный ключ, None у незнакомой
+     "category_label": "Mahapurusha",# подпись сайта, локализована
+     "planets": ["Sa"],              # коды
+     "planets_label": "Sa",
+     "all_planets": False,           # True, когда сайт пишет "All"
+     "effect": "Wandering leader of free spirit",
+     "condition": "Saturn in a kendra in own or exaltation sign"},
+  ],
+}
+```
+
+Ключи категорий: `mahapurusha`, `solar`, `lunar`, `nabhasa`, `raja_dhana`,
+`other` (таблица `CATEGORY_KEYS` в `parsers/show_yogas.py`). Одна и та же йога
+может прийти дважды — отдельно «от Луны»; суффикс локализован, парсер его не
+разбирает.
+
+### 4.7 `show_avasthas` — состояния планет
+
+```python
+api.show_avasthas(session, chart, divisional="D1")
+```
+
+```python
+{
+  "divisional": "D1",
+  "planets": [                       # 9: семь планет + Раху и Кету
+    {"code": "Su", "name": "Sun",
+     "baladi":    {"state": "Young", "strength_percent": 50, "tone": "orange"},
+     "jagradadi": {"state": "Dreaming", "strength_percent": 50, "tone": "orange"},
+     "deeptadi": [                   # состояния по настроению + причины
+       {"state": "Relaxed, inspired, open and supported", "tone": "green",
+        "reason": "Benefic influence: Ju", "planets": ["Ju"], "signs": []},
+     ],
+     "shayanadi": {
+       "state": "Gaining", "tone": "red", "effect": "...",
+       "by_letter_group": [          # 5 групп: сила зависит от первого слога имени
+         {"letters": ["a", "bh", "chh", "d`", "dh``", "k", "v"],
+          "strength_percent": 50, "tone": "orange"},
+       ]}},
+  ],
+  "shayanadi_legend": [              # только встретившиеся состояния
+    {"state": "Resting", "count": 1, "tone": "red", "description": "..."},
+  ],
+  "shayanadi_note": "Note: to determine the strength ...",
+}
+```
+
+`tone` — цвет, которым сайт пометил вердикт, и он следует за силой: 100% зелёный,
+50% оранжевый, 25/15/0% красный. Сумма `count` по легенде равна числу планет.
+
+### 4.8 `show_bhava` — дома бхава-чалиты
+
+```python
+api.show_bhava(session, chart, divisional="D1")
+```
+
+```python
+{
+  "divisional": "D1",
+  "houses": [                        # 12, по порядку
+    {"house": 1,
+     "cusp":  {"sign": "Aries",  "degrees": "00°33'53''", "degrees_decimal": 0.564722},
+     "start": {"sign": "Pisces", "degrees": "12°48'51''", "degrees_decimal": 12.814167},
+     "end":   {"sign": "Aries",  "degrees": "12°48'51''", "degrees_decimal": 12.814167},
+     "size": "29°59'58''", "size_decimal": 29.999444,
+     "planets": ["As"]},
+  ],
+  "chart": {...},                    # рисунок в форме show_chart
+}
+```
+
+**Бхава-балы здесь нет** — сайт отдаёт только геометрию домов и их состав.
+Единственная сила уровня домов среди открытых действий — матрица дрик-балы на
+дома в `show_bala`. Дома неравные, в сумме 360°.
+
+### 4.9 `show_sade_sati` — проходы Сатурна по Луне
+
+```python
+api.show_sade_sati(session, chart)     # варга не передаётся
+```
+
+```python
+{
+  "methods": [                         # два: традиционный и Шри Х.Н. Катве
+    {"title": "Sade Sati (traditional)",
+     "periods": [                      # по четыре на жизнь
+       {"title": "FIRST SADE SATI",
+        "start": "2003-04-08T00:00",   # непрерывный основной отрезок
+        "end": "2009-09-10T00:00",
+        "segments": [
+          {"start": "2003-04-08T00:00", "end": "2004-09-06T00:00",
+           "description": "Saturn in 12th in Gemini",
+           "house": 12,                # цифра из описания
+           "within_main": True},       # False — касание вне основного отрезка
+        ]}]}
+  ],
+}
+```
+
+Фазы с `within_main: True` стыкуются встык и покрывают основной отрезок
+целиком. Даты берутся из атрибутов `data`, а не из подписей.
+
+### 4.10 `get_aspects` / `get_argala` — аспекты и аргала на знак
+
+Единственные два действия с текстовым ответом вместо HTML.
+
+```python
+api.get_aspects(session, chart, sign=4, divisional="D1")
+api.get_argala(session, chart, sign=1, type=1, divisional="D1")
+```
+
+```python
+# "Ju Sa|2 8 11"
+{"sign": 4, "planets": ["Ju", "Sa"], "signs": [2, 8, 11]}
+
+# "2 12 4 10 11 3"
+{"sign": 1, "type": 1, "signs": [2, 12, 4, 10, 11, 3],
+ "argala": [2, 4, 11], "virodha": [12, 10, 3], "special": []}
+```
+
+`sign` и все числа в ответах — абсолютные номера знаков (Овен = 1). У
+`get_aspects` слева планеты, аспектирующие знак, справа — знаки, которые он
+аспектирует по раши-дришти. У `get_argala` `type=1` даёт основную аргалу и
+вародху, `type=2` — второй набор (пятое число уходит в `special`); другие
+значения `type` сайт не понимает и отвечает HTTP 500.
+
+**Ловушка:** шесть позиций всегда классические (2/4/11 и 12/10/3), но для
+знака, который занимает Кету, группы `argala` и `virodha` приходят
+поменянными местами. Парсер отдаёт группировку сайта как есть.
 ---
 
 ## 5. Как запускать
@@ -485,6 +484,12 @@ vedic-parser show-chart $C --style South
 vedic-parser show-other $C
 vedic-parser show-dasha $C --dasha narayana --level 2
 vedic-parser show-bala  $C --shad-bala-only
+vedic-parser show-yogas $C
+vedic-parser show-avasthas $C
+vedic-parser show-bhava $C
+vedic-parser show-sade-sati $C
+vedic-parser get-aspects $C --sign 4
+vedic-parser get-argala  $C --sign 1 --type 1
 ```
 
 Общие флаги (работают и до, и после подкоманды): `--lang en|ru`, `--base-url`,
@@ -522,7 +527,7 @@ info = parse_show_info(open("saved.html", encoding="utf-8").read())
 ### Тесты и вспомогательные скрипты
 
 ```sh
-python -m pytest                    # 78 тестов, все офлайн
+python -m pytest                    # 137 тестов, все офлайн
 scripts/probe.sh [base-url] [dir]   # сложить сырые ответы всех действий в каталог
 python scripts/example_md.py        # перегенерировать docs/example-*.md из фикстур
 ```
@@ -605,11 +610,19 @@ from vedic_parser import (
 
 ## 7. Чего пока нет
 
-Реализованы `session`, `show-info`, `show-chart`, `show-other`, `show-dasha`,
-`show-bala`. Бесплатными и анонимно доступными остаются `show-bhava`,
-`show-avasthas`, `show-yogas`, `show-sade-sati`, `show-vargas`,
-`show-current-periods`, `get-aspects`, `get-argala`, `first-house` и
-интерпретации — все они разведаны и описаны в `docs/recon.md`, §4.
+Реализованы `session` и десять действий: `show-info`, `show-chart`, `show-other`,
+`show-dasha`, `show-bala`, `show-yogas`, `show-avasthas`, `show-bhava`,
+`show-sade-sati`, `get-aspects`/`get-argala`.
+
+Из бесплатных и доступных анонимно остаются `show-vargas`,
+`show-current-periods`, `first-house`, `show-chart-big`/`show-chart-overlay` и
+текстовые интерпретации (`windows/analyse_interpretation.php`, только на `.ru`).
+Все они разведаны и описаны в `docs/recon.md`, §4–5. Платное (транзиты,
+совместимость, варшапхала, мухурта) закрыто `403` и без аккаунта недоступно.
+
+Отдельно: **бхава-балы у сайта нет вообще** — `show-bhava` отдаёт только
+геометрию домов. Единственная сила уровня домов среди открытых действий —
+матрица дрик-балы на дома в `show-bala`.
 
 Новый парсер добавляется по одной схеме:
 
