@@ -13,7 +13,7 @@ access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
 **show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**, **show-sade-sati**,
-**get-aspects**, **get-argala**.
+**get-aspects**, **get-argala**, **show-current-periods**.
 
 ## Install
 
@@ -189,6 +189,18 @@ are absolute sign numbers (Aries = 1).
 
 Mind one quirk: for the sign Ketu occupies the two argala groups come back
 swapped. That is the site's own grouping and is reported as given.
+
+### What show-current-periods returns
+
+The dasha chain running at one moment, across every system the site shows at
+once — maha, antar and pratyantar for each. Systems are keyed to the same names
+`show-dasha` takes, through a table of the site's own wording in both
+languages. Sign-based systems give sign codes here, unlike `show-dasha`, which
+only gives their localised names.
+
+The site needs a moment and does not complain about one it cannot parse — it
+just answers with an empty chain — so `api.show_current_periods` formats it the
+way the site's own JavaScript does.
 
 ## Access notes
 

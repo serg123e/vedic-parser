@@ -24,6 +24,7 @@ from vedic_parser import (  # noqa: E402
     parse_show_bala,
     parse_show_bhava,
     parse_show_chart,
+    parse_show_current_periods,
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
@@ -1215,6 +1216,82 @@ def build_effects() -> list[str]:
     return out
 
 
+def build_show_current_periods() -> list[str]:
+    now = fixture("show-current-periods-en-2026.html", parse_show_current_periods)
+    birth = fixture("show-current-periods-en-birth.html", parse_show_current_periods)
+    ru = fixture("show-current-periods-ru-2026.html", parse_show_current_periods)
+
+    out = ["# Пример данных: `show-current-periods`\n", HEADER]
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-current-periods --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4 --moment 13.09.2026",
+    )
+    out.append(
+        "Какие периоды идут в конкретный момент — сразу по нескольким системам, "
+        "одной строкой. `--moment` по умолчанию «сейчас».\n"
+    )
+    out.append("Весь ответ сайта — вот столько:\n")
+    code_block(
+        out,
+        "html",
+        '<span>13.09.2026</span>&nbsp;&nbsp;&nbsp;&nbsp;',
+        '<b title="Vimshottari dasha">VD: </b><span class="Ve">Ve</span>-<span class="Mo">Mo</span>-<span class="Ra">Ra</span>',
+        '<b title="Chara dasha (K.N. Rao)">CD: </b>Sg-Le-Cp',
+    )
+
+    out.append("## 1. Что получается\n")
+    as_json(out, now)
+
+    out.append("## 2. Момент меняет всё\n")
+    table(
+        out,
+        ["Система", "Вид"] + [f'на {d}' for d in (birth["date_label"], now["date_label"])],
+        [
+            [a["title"], a["kind"], "-".join(a["lords"]), "-".join(b["lords"])]
+            for a, b in zip(birth["dashas"], now["dashas"])
+        ],
+    )
+    out.append(
+        "Цепочка — маха-антар-пратьянтар. Сверено с `show-dasha`: период, "
+        "который там накрывает этот момент, совпадает с первыми двумя звеньями "
+        "(и для планетных систем, и для знаковых).\n"
+    )
+
+    out.append("## 3. Ключи систем\n")
+    out.append(
+        "И сокращение (`VD:`), и подпись в `title` переводятся, поэтому система "
+        "опознаётся по таблице подписей — тех же самых, что стоят в селекторе "
+        "даш. Незнакомую подпись парсер не угадывает: `dasha` станет `null`, а "
+        "текст сохранится.\n"
+    )
+    table(
+        out,
+        ["`dasha`", "en `abbr`", "en `title`", "ru `abbr`", "ru `title`"],
+        [
+            [f'`{a["dasha"]}`', a["abbr"], a["title"], b["abbr"], b["title"]]
+            for a, b in zip(now["dashas"], ru["dashas"])
+        ],
+    )
+    out.append(
+        "**Важное отличие от `show-dasha`:** знаковые системы (Чара, Нарайана) "
+        "здесь приходят **кодами знаков** (`Sg-Le-Cp`), а не локализованными "
+        "названиями. Это единственное место, где знаковую дашу можно читать "
+        "не глядя на язык.\n"
+    )
+
+    out.append("## 4. Про параметр момента\n")
+    out.append(
+        "Сайт понимает и `13.09.2026`, и `13.9.2026 12:0`, и даже `2026-09-13`. "
+        "А вот на то, что распарсить не смог, он не ругается — молча отдаёт "
+        "подпись первой системы и пустую цепочку. Поэтому `api.show_current_periods` "
+        "форматирует момент сам, ровно так же, как это делает JavaScript сайта.\n"
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
@@ -1226,6 +1303,7 @@ DOCUMENTS = {
     "show-bhava": ("example-show-bhava.md", build_show_bhava),
     "show-sade-sati": ("example-show-sade-sati.md", build_show_sade_sati),
     "effects": ("example-effects.md", build_effects),
+    "show-current-periods": ("example-show-current-periods.md", build_show_current_periods),
 }
 
 

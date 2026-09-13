@@ -5,6 +5,7 @@ from .show_avasthas import parse_show_avasthas
 from .show_bala import parse_show_bala
 from .show_bhava import parse_show_bhava
 from .show_chart import parse_show_chart
+from .show_current_periods import parse_show_current_periods
 from .show_dasha import parse_show_dasha
 from .show_info import parse_show_info
 from .show_other import parse_show_other
@@ -18,6 +19,7 @@ __all__ = [
     "parse_show_bala",
     "parse_show_bhava",
     "parse_show_chart",
+    "parse_show_current_periods",
     "parse_show_dasha",
     "parse_show_info",
     "parse_show_other",

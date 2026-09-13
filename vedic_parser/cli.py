@@ -21,6 +21,7 @@ from .parsers import (
     parse_show_bala,
     parse_show_bhava,
     parse_show_chart,
+    parse_show_current_periods,
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
@@ -230,6 +231,17 @@ def build_parser() -> argparse.ArgumentParser:
     argala_cmd.add_argument("--divisional", default="D1", help="varga code (default: D1)")
     argala_cmd.set_defaults(handler=_cmd_get_argala)
 
+    current_cmd = sub.add_parser(
+        "show-current-periods", help="which dasha periods run at one moment"
+    )
+    _add_common_args(current_cmd, suppress=True)
+    _add_chart_args(current_cmd)
+    current_cmd.add_argument(
+        "--moment", metavar="D.M.YYYY H:M", help="the moment to ask about (default: now)"
+    )
+    current_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    current_cmd.set_defaults(handler=_cmd_show_current_periods)
+
     return parser
 
 
@@ -336,6 +348,13 @@ def _cmd_get_argala(args: argparse.Namespace) -> dict[str, Any]:
         type=args.type,
         divisional=args.divisional,
     )
+
+
+def _cmd_show_current_periods(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_current_periods(handle.read())
+    return api.show_current_periods(_open_session(args), _chart(args), moment=args.moment)
 
 
 def _open_session(args: argparse.Namespace) -> Session:

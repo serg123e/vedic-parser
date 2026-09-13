@@ -14,6 +14,7 @@ from .parsers import (
     parse_show_bala,
     parse_show_bhava,
     parse_show_chart,
+    parse_show_current_periods,
     parse_show_dasha,
     parse_show_info,
     parse_show_other,
@@ -250,3 +251,19 @@ def get_argala(
     result = parse_get_argala(text, type=type)
     result["sign"] = sign
     return result
+
+
+def show_current_periods(
+    session: Session, chart: Chart, moment: str | datetime | None = None
+) -> dict[str, Any]:
+    """Which dasha period is running at one moment, across several systems.
+
+    ``moment`` defaults to now. The site needs it: asked without one it answers
+    with the first system's label and nothing else, and a value it cannot parse
+    gets the same empty treatment rather than an error — so the moment is
+    formatted here the way the site's own JavaScript formats it.
+
+    Sign-based systems come back as sign codes here, unlike ``show-dasha``.
+    """
+    html = session.action("show-current-periods", chart, datetime=_moment(moment))
+    return parse_show_current_periods(html)
