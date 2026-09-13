@@ -10,6 +10,7 @@ from .show_dasha import parse_show_dasha
 from .show_info import parse_show_info
 from .show_other import parse_show_other
 from .show_sade_sati import parse_show_sade_sati
+from .show_vargas import parse_show_vargas
 from .show_yogas import parse_show_yogas
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "parse_show_info",
     "parse_show_other",
     "parse_show_sade_sati",
+    "parse_show_vargas",
     "parse_show_yogas",
 ]

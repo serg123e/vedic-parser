@@ -29,6 +29,7 @@ from vedic_parser import (  # noqa: E402
     parse_show_info,
     parse_show_other,
     parse_show_sade_sati,
+    parse_show_vargas,
     parse_show_yogas,
 )
 
@@ -1292,6 +1293,89 @@ def build_show_current_periods() -> list[str]:
     return out
 
 
+def build_show_vargas() -> list[str]:
+    vargas = fixture("show-vargas-en-d1-d9-d10.html", parse_show_vargas)
+    natal = fixture("show-chart-en-d1-north.html", parse_show_chart)
+    rotated = {
+        4: fixture("first-house-en-sign4.html", parse_show_chart),
+        7: fixture("first-house-en-sign7.html", parse_show_chart),
+    }
+
+    out = ["# Пример данных: `show-vargas` и `first-house`\n", HEADER]
+    out.append(
+        "Оба действия отдают разметку карты, поэтому разбираются тем же кодом, "
+        "что `show-chart`. Интересно в них другое: одно — пакетное, другое "
+        "переворачивает счёт домов.\n"
+    )
+
+    out.append("## 1. `show-vargas` — несколько карт за один запрос\n")
+    code_block(
+        out,
+        "sh",
+        "vedic-parser show-vargas --name Ss --date 07.08.1983 --time 23:00:00 \\",
+        "    --latitude 55.45 --longitude 37.37 --timezone +4 \\",
+        "    --divisionals D1 D9 D10",
+    )
+    out.append(
+        f'Ответ — {len(vargas["charts"])} блока, по карте на каждую варгу '
+        "(≈39 КБ на три). Это в точности то же, что дал бы `show-chart` на "
+        "каждую варгу по отдельности, но одним обращением — проверяется тестом "
+        "против одиночных ответов.\n"
+    )
+    table(
+        out,
+        ["Варга", "Стиль"] + [p["code"] for p in natal["planets"]],
+        [
+            [c["divisional"], c["style"]]
+            + [
+                next(
+                    f'{x["house"]} {x["sign"]}'
+                    for x in c["planets"] if x["code"] == p["code"]
+                )
+                for p in natal["planets"]
+            ]
+            for c in vargas["charts"]
+        ],
+    )
+    out.append(
+        "Стиль можно задать свой на каждую карту (в этом запросе третья "
+        "запрошена как South — и пришла South). И ещё: **здесь селектору варги "
+        "в ответе можно верить** — каждый блок называет свою варгу, в отличие от "
+        "`show-info`, где `<select>` показывает дефолт сессии.\n"
+    )
+
+    out.append("## 2. `first-house` — карта от выбранного знака\n")
+    code_block(
+        out,
+        "sh",
+        "vedic-parser first-house --sign 4 --name Ss --date 07.08.1983 ...",
+    )
+    out.append(
+        "Ничего не переезжает — меняется только нумерация домов: выбранный знак "
+        "становится первым. Так карту читают от Луны, от караки или от любого "
+        "другого знака.\n"
+    )
+    table(
+        out,
+        ["Планета", "Знак", "Дом в натальной (от Ar)", "От Рака (`--sign 4`)", "От Весов (`--sign 7`)"],
+        [
+            [
+                p["code"], p["sign"], p["house"],
+                next(x["house"] for x in rotated[4]["planets"] if x["code"] == p["code"]),
+                next(x["house"] for x in rotated[7]["planets"] if x["code"] == p["code"]),
+            ]
+            for p in natal["planets"]
+        ],
+    )
+    out.append(
+        "Правило простое и проверяется тестом: планета в знаке S попадает в дом, "
+        "которым S приходится выбранному знаку. Асцендент в Овне от Рака — "
+        "десятый; Солнце в Раке от Рака — первое.\n"
+    )
+    out.append(FOOTER)
+    return out
+
+
 DOCUMENTS = {
     "show-info": ("example-show-info.md", build_show_info),
     "show-chart": ("example-show-chart.md", build_show_chart),
@@ -1304,6 +1388,7 @@ DOCUMENTS = {
     "show-sade-sati": ("example-show-sade-sati.md", build_show_sade_sati),
     "effects": ("example-effects.md", build_effects),
     "show-current-periods": ("example-show-current-periods.md", build_show_current_periods),
+    "show-vargas": ("example-show-vargas.md", build_show_vargas),
 }
 
 

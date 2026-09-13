@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from collections.abc import Sequence
 from datetime import datetime
 
 from .chart import Chart
@@ -19,6 +20,7 @@ from .parsers import (
     parse_show_info,
     parse_show_other,
     parse_show_sade_sati,
+    parse_show_vargas,
     parse_show_yogas,
 )
 from .session import Session
@@ -267,3 +269,59 @@ def show_current_periods(
     """
     html = session.action("show-current-periods", chart, datetime=_moment(moment))
     return parse_show_current_periods(html)
+
+
+def show_vargas(
+    session: Session,
+    chart: Chart,
+    divisionals: Sequence[str] = ("D1", "D9"),
+    styles: Sequence[str] | str = "North",
+) -> dict[str, Any]:
+    """Several divisional charts in one request.
+
+    ``divisionals`` is the list of varga codes to draw; ``styles`` is either one
+    style for all of them or one per chart. This is the batch form of
+    :func:`show_chart` — the same data, without a request per varga.
+    """
+    codes = list(divisionals)
+    if isinstance(styles, str):
+        chosen = [styles] * len(codes)
+    else:
+        chosen = list(styles)
+    if len(chosen) != len(codes):
+        raise ValueError(
+            f"got {len(chosen)} styles for {len(codes)} vargas; pass one or one each"
+        )
+
+    html = session.action(
+        "show-vargas", chart, divisionals=" ".join(codes), styles=" ".join(chosen)
+    )
+    return parse_show_vargas(html)
+
+
+def first_house(
+    session: Session,
+    chart: Chart,
+    sign: int,
+    divisional: str = "D1",
+    style: str = "North",
+) -> dict[str, Any]:
+    """The chart re-counted so that one sign becomes the first house.
+
+    ``sign`` is an absolute sign number, Aries = 1. Placements do not move —
+    only the house numbering does, which is how a chart is read from the Moon,
+    from a karaka, or from any other sign.
+    """
+    html = session.action(
+        "first-house",
+        chart,
+        sign=str(sign),
+        divisional=divisional,
+        style=style,
+        chart_big="",
+        type="",
+    )
+    result = parse_show_chart(html)
+    result["divisional"] = divisional
+    result["first_house_sign"] = sign
+    return result

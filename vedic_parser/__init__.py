@@ -16,6 +16,7 @@ from .parsers import (
     parse_show_info,
     parse_show_other,
     parse_show_sade_sati,
+    parse_show_vargas,
     parse_show_yogas,
 )
 from .session import (
@@ -45,6 +46,7 @@ __all__ = [
     "parse_show_info",
     "parse_show_other",
     "parse_show_sade_sati",
+    "parse_show_vargas",
     "parse_show_yogas",
 ]
 

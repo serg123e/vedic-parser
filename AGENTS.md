@@ -458,7 +458,30 @@ api.show_current_periods(session, chart, moment=None)   # по умолчани�
 `show_dasha`. Момент обязателен: на его отсутствие и на непонятную дату сайт
 молча отвечает пустой цепочкой, поэтому `api` форматирует его сам.
 
-### 4.11 `get_aspects` / `get_argala` — аспекты и аргала на знак
+### 4.11 `show_vargas` / `first_house` — пакет карт и поворот домов
+
+```python
+api.show_vargas(session, chart, divisionals=["D1", "D9", "D10"], styles="North")
+api.first_house(session, chart, sign=4, divisional="D1")
+```
+
+```python
+# show_vargas: по карте на варгу, каждая в форме show_chart
+{"charts": [{"divisional": "D1", "style": "north", "houses": [...], "planets": [...]},
+            {"divisional": "D9", ...}]}
+
+# first_house: та же форма плюс
+{"first_house_sign": 4, "divisional": "D1", "houses": [...], "planets": [...]}
+```
+
+`show_vargas` — пакетная форма `show_chart`: те же данные, но без запроса на
+каждую варгу. `styles` — одно значение на все карты или по одному на каждую.
+В этом ответе селектор варги внутри блока честный, в отличие от `show_info`.
+
+`first_house` ничего не двигает: тело в знаке S оказывается в доме, которым S
+приходится выбранному знаку (`(sign_number - sign) % 12 + 1`).
+
+### 4.12 `get_aspects` / `get_argala` — аспекты и аргала на знак
 
 Единственные два действия с текстовым ответом вместо HTML.
 
@@ -515,6 +538,8 @@ vedic-parser show-sade-sati $C
 vedic-parser get-aspects $C --sign 4
 vedic-parser get-argala  $C --sign 1 --type 1
 vedic-parser show-current-periods $C --moment 13.09.2026
+vedic-parser show-vargas $C --divisionals D1 D9 D10
+vedic-parser first-house $C --sign 4
 ```
 
 Общие флаги (работают и до, и после подкоманды): `--lang en|ru`, `--base-url`,
@@ -552,7 +577,7 @@ info = parse_show_info(open("saved.html", encoding="utf-8").read())
 ### Тесты и вспомогательные скрипты
 
 ```sh
-python -m pytest                    # 149 тестов, все офлайн
+python -m pytest                    # 161 тест, все офлайн
 scripts/probe.sh [base-url] [dir]   # сложить сырые ответы всех действий в каталог
 python scripts/example_md.py        # перегенерировать docs/example-*.md из фикстур
 ```
@@ -635,12 +660,14 @@ from vedic_parser import (
 
 ## 7. Чего пока нет
 
-Реализованы `session` и одиннадцать действий: `show-info`, `show-chart`,
+Реализованы `session` и тринадцать действий: `show-info`, `show-chart`,
 `show-other`, `show-dasha`, `show-bala`, `show-yogas`, `show-avasthas`,
-`show-bhava`, `show-sade-sati`, `show-current-periods`, `get-aspects`/`get-argala`.
+`show-bhava`, `show-sade-sati`, `show-current-periods`, `show-vargas`,
+`first-house`, `get-aspects`/`get-argala`.
 
-Из бесплатных и доступных анонимно остаются `show-vargas`, `first-house`,
-`show-chart-big`/`show-chart-overlay` и текстовые интерпретации (`windows/analyse_interpretation.php`, только на `.ru`).
+Из бесплатных и доступных анонимно остаются `show-chart-big`/`show-chart-overlay`
+(те же карты крупнее и наложением — разбираются уже готовым `parse_show_chart`)
+и текстовые интерпретации (`windows/analyse_interpretation.php`, только на `.ru`).
 Все они разведаны и описаны в `docs/recon.md`, §4–5. Платное (транзиты,
 совместимость, варшапхала, мухурта) закрыто `403` и без аккаунта недоступно.
 

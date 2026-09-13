@@ -26,6 +26,7 @@ from .parsers import (
     parse_show_info,
     parse_show_other,
     parse_show_sade_sati,
+    parse_show_vargas,
     parse_show_yogas,
 )
 from .session import BASE_BY_LANG, Session, VedicHoroError
@@ -242,6 +243,35 @@ def build_parser() -> argparse.ArgumentParser:
     current_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
     current_cmd.set_defaults(handler=_cmd_show_current_periods)
 
+    vargas_cmd = sub.add_parser("show-vargas", help="several divisional charts in one request")
+    _add_common_args(vargas_cmd, suppress=True)
+    _add_chart_args(vargas_cmd)
+    vargas_cmd.add_argument(
+        "--divisionals", nargs="+", default=["D1", "D9"], metavar="D1",
+        help="varga codes to draw (default: D1 D9)",
+    )
+    vargas_cmd.add_argument(
+        "--style", default="North", choices=["North", "South"],
+        help="style for every chart (default: North)",
+    )
+    vargas_cmd.add_argument("--html", metavar="FILE", help="parse a saved response instead of fetching")
+    vargas_cmd.set_defaults(handler=_cmd_show_vargas)
+
+    first_cmd = sub.add_parser(
+        "first-house", help="the chart re-counted from one sign as the first house"
+    )
+    _add_common_args(first_cmd, suppress=True)
+    _add_chart_args(first_cmd)
+    first_cmd.add_argument(
+        "--sign", type=int, required=True, choices=range(1, 13), metavar="1-12",
+        help="absolute sign number to put first, Aries = 1",
+    )
+    first_cmd.add_argument("--divisional", default="D1", help="varga code (default: D1)")
+    first_cmd.add_argument(
+        "--style", default="North", choices=["North", "South"], help="chart style"
+    )
+    first_cmd.set_defaults(handler=_cmd_first_house)
+
     return parser
 
 
@@ -355,6 +385,25 @@ def _cmd_show_current_periods(args: argparse.Namespace) -> dict[str, Any]:
         with open(args.html, encoding="utf-8") as handle:
             return parse_show_current_periods(handle.read())
     return api.show_current_periods(_open_session(args), _chart(args), moment=args.moment)
+
+
+def _cmd_show_vargas(args: argparse.Namespace) -> dict[str, Any]:
+    if args.html:
+        with open(args.html, encoding="utf-8") as handle:
+            return parse_show_vargas(handle.read())
+    return api.show_vargas(
+        _open_session(args), _chart(args), divisionals=args.divisionals, styles=args.style
+    )
+
+
+def _cmd_first_house(args: argparse.Namespace) -> dict[str, Any]:
+    return api.first_house(
+        _open_session(args),
+        _chart(args),
+        sign=args.sign,
+        divisional=args.divisional,
+        style=args.style,
+    )
 
 
 def _open_session(args: argparse.Namespace) -> Session:

@@ -13,7 +13,8 @@ access quirks. `scripts/probe.sh` dumps raw responses for inspection.
 
 Tools so far: **session**, **show-info**, **show-chart**, **show-other**,
 **show-dasha**, **show-bala**, **show-yogas**, **show-avasthas**, **show-bhava**, **show-sade-sati**,
-**get-aspects**, **get-argala**, **show-current-periods**.
+**get-aspects**, **get-argala**, **show-current-periods**, **show-vargas**,
+**first-house**.
 
 ## Install
 
@@ -54,6 +55,10 @@ vedic-parser show-bala --name Ss --date 07.08.1983 --time 23:00:00 \
 # the yogas the chart forms
 vedic-parser show-yogas --name Ss --date 07.08.1983 --time 23:00:00 \
     --latitude 55.45 --longitude 37.37 --timezone +4
+
+# several divisional charts in one request, and a chart read from another sign
+vedic-parser show-vargas $C --divisionals D1 D9 D10
+vedic-parser first-house $C --sign 4
 
 # parse a response saved earlier, without touching the network
 vedic-parser show-info ... --html response.html
@@ -201,6 +206,16 @@ only gives their localised names.
 The site needs a moment and does not complain about one it cannot parse — it
 just answers with an empty chain — so `api.show_current_periods` formats it the
 way the site's own JavaScript does.
+
+### What show-vargas and first-house return
+
+Both answer with chart markup, so both come back in `show-chart`'s shape.
+`show-vargas` is the batch form — one `charts` entry per requested varga, each
+with its own `divisional` and style, saving a request per varga; here the
+varga selector in the response is trustworthy, unlike in `show-info`.
+`first-house` re-counts the houses so a chosen sign becomes the first: nothing
+moves, only the numbering, which is how a chart is read from the Moon or from
+a karaka.
 
 ## Access notes
 
